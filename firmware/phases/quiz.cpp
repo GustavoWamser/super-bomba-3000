@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
+#include "../hardware/adc.h"
 
 #define TOTAL_PERGUNTAS 10
 #define PERGUNTAS_POR_RODADA 5
@@ -85,28 +86,28 @@ void loop() {
   _delay_ms(1000);
 }
 
-uint16_t meu_analogRead(uint8_t canal) {
-  ADMUX = (ADMUX & 0xF0) | canal;
-  set_bit(ADCSRA, ADSC);
-  while (tst_bit(ADCSRA, ADSC));
-  return ADC;
-}
-
-char lerTeclado() {
+char lerTeclado(void) {
   static char ultimaTecla = '\0';
   char teclaPressionada = '\0';
 
-  for (uint8_t linha = 0; linha < 4; linha++) {
+  for (int linha = 0; linha < 4; linha++) {
     clr_bit(PORTB, pinosLinhas[linha]);
     _delay_us(1);
 
-    for (uint8_t coluna = 0; coluna < 4; coluna++) {
-      bool pressionada;
-      if (coluna == 0) pressionada = !tst_bit(PINB, pinosColunas[coluna]);
-      else if (coluna == 1) pressionada = !tst_bit(PIND, pinosColunas[coluna]);
-      else pressionada = !tst_bit(PINC, pinosColunas[coluna]);
-
-      if (pressionada) teclaPressionada = teclas[linha][coluna];
+    for (int coluna = 0; coluna < 4; coluna++) {
+      if (coluna < 1) {
+        if (!(tst_bit(PINB, pinosColunas[coluna]))) {
+          teclaPressionada = teclas[linha][coluna];
+        }
+      } else if (coluna < 2) {
+        if (!(tst_bit(PIND, pinosColunas[coluna]))) {
+          teclaPressionada = teclas[linha][coluna];
+        }
+      } else {
+        if (!(tst_bit(PINC, pinosColunas[coluna]))) {
+          teclaPressionada = teclas[linha][coluna];
+        }
+      }
     }
 
     set_bit(PORTB, pinosLinhas[linha]);

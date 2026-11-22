@@ -1,5 +1,6 @@
 #include <avr/io.h>
 #include <util/delay.h>
+#include "../hardware/adc.h"
 
 #define set_bit(reg, bit) ((reg) |= (1 << (bit)))
 #define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
@@ -112,14 +113,6 @@ void setup() {
   
   iniciarLabirinto();
 }
-
-uint16_t meu_analogRead(uint8_t canal) {
-  ADMUX = (ADMUX & 0xF0) | canal; // escolhe A0..A5
-  set_bit(ADCSRA, ADSC);          // começa a conversão
-  while (tst_bit(ADCSRA, ADSC));  // espera terminar a leitura
-  return ADC;
-}
-
 
 void iniciarLabirinto(void) {
   srand(meu_analogRead(0));

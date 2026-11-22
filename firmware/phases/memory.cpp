@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include "../hardware/adc.h"
 
 #define TAMANHO_FINAL 7
 #define TEMPO_RESPOSTA 3000 // ms
@@ -40,13 +41,6 @@ void envia_texto(const char *texto) {
   for (int i = 0; texto[i] != '\0'; i++) {
     envia_letra(texto[i]);
   }
-}
-
-uint16_t meu_analogRead(uint8_t canal) {
-  ADMUX = (ADMUX & 0xF0) | canal; // escolhe A0..A5
-  set_bit(ADCSRA, ADSC);          // começa a conversão
-  while (tst_bit(ADCSRA, ADSC));  // espera terminar a leitura
-  return ADC;
 }
 
 int8_t le_faixa_adc(void) {

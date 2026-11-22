@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
+#include "../hardware/adc.h"
 
 #define TOTAL_OPERACOES 10
 #define OPERACOES_POR_FASE 5
@@ -79,13 +80,6 @@ void setup() {
 void loop() {
   mathFase();
   _delay_ms(1000);
-}
-
-uint16_t meu_analogRead(uint8_t canal) {
-  ADMUX = (ADMUX & 0xF0) | canal; // escolhe A0..A5
-  set_bit(ADCSRA, ADSC);          // começa a conversão
-  while (tst_bit(ADCSRA, ADSC));  // espera terminar a leitura
-  return ADC;
 }
 
 char lerTeclado(void) {
