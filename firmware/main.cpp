@@ -4,10 +4,13 @@
 
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
+#include "hardware/botoes.h"
 #include "hardware/timer.h"
 #include "phases/labyrinth.h"
 #include "phases/math.h"
+#include "phases/memory.h"
 #include "phases/quiz.h"
+#include "phases/reflex.h"
 #include "system/fase_status.h"
 #include "system/menu.h"
 
@@ -27,9 +30,6 @@ static bool jogoIniciado = false;
 static bool faseInicializada = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
-
-uint8_t fase_genius(void);
-uint8_t fase_reflexo(void);
 
 static void sortearOrdemFases(void) {
   for (uint8_t i = 0; i < TOTAL_FASES; i++) {
@@ -68,6 +68,7 @@ void setup() {
   Serial.begin(9600);
   configurarTeclado();
   configurarADC();
+  configurarBotoes();
   configurarTimer();
   srand(meu_analogRead(0));
 }
@@ -103,6 +104,10 @@ void loop() {
   if (!faseInicializada) {
     if (faseAtual == LABIRINTO) {
       iniciarLabirinto();
+    } else if (faseAtual == MEMORY) {
+      iniciarMemory();
+    } else if (faseAtual == REFLEX) {
+      iniciarReflex();
     }
     faseInicializada = true;
   }
@@ -114,13 +119,16 @@ void loop() {
     statusFase = mathFase();
   } else if (faseAtual == QUIZ) {
     statusFase = quizFase();
-  } else if (faseAtual == MEMORY || faseAtual == REFLEX) {
-    // memory/reflex ainda são programas independentes com main() próprio.
+  } else if (faseAtual == MEMORY) {
+    statusFase = memoryFase();
+  } else if (faseAtual == REFLEX) {
+    statusFase = reflexFase();
   }
 
   if (statusFase == FASE_ERROU) {
     vidas--;
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
+    faseInicializada = false;
 
     Serial.print("Erro! Vidas restantes: ");
     Serial.println(vidas);
