@@ -4,15 +4,13 @@
 #include <stdlib.h>
 
 #include "../hardware/botoes.h"
+#include "../hardware/leds.h"
 #include "../hardware/timer.h"
 
 namespace {
 
 constexpr uint32_t TEMPO_MAXIMO = 1000;
 constexpr uint8_t ACERTOS_PARA_PASSAR = 7;
-constexpr uint8_t LEDS = 0b01111000;
-const uint8_t LED[4] = {PD6, PD5, PD4, PD3};
-
 enum EstadoReflex {
   REFLEX_PREPARANDO,
   REFLEX_ESPERANDO
@@ -26,8 +24,7 @@ uint32_t referenciaTempo = 0;
 }
 
 void iniciarReflex(void) {
-  DDRD |= LEDS;
-  PORTD &= ~LEDS;
+  apagarTodosLeds();
   acertos = 0;
   sorteado = -1;
   referenciaTempo = tempoAtual();
@@ -45,23 +42,21 @@ StatusFase reflexFase(void) {
   }
 
   if (sorteado == -1) {
-    int8_t novo = rand() % 4;
-    while (novo == sorteado) novo = rand() % 4;
-    sorteado = novo;
-    PORTD |= (1 << LED[sorteado]);
+    sorteado = sortearLedDiferente(sorteado);
+    acenderLed(sorteado);
     referenciaTempo = agora;
   }
 
   if (aperto == -1) {
     if (agora - referenciaTempo >= TEMPO_MAXIMO) {
-      PORTD &= ~LEDS;
+      apagarTodosLeds();
       Serial.println("Demorou demais!");
       return FASE_ERROU;
     }
     return FASE_RODANDO;
   }
 
-  PORTD &= ~LEDS;
+  apagarTodosLeds();
   if (aperto != sorteado) {
     Serial.println("Botao errado!");
     return FASE_ERROU;

@@ -5,6 +5,7 @@
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
 #include "hardware/botoes.h"
+#include "hardware/leds.h"
 #include "hardware/timer.h"
 #include "phases/labyrinth.h"
 #include "phases/math.h"
@@ -69,6 +70,7 @@ void setup() {
   configurarTeclado();
   configurarADC();
   configurarBotoes();
+  configurarLeds();
   configurarTimer();
   srand(meu_analogRead(0));
 }

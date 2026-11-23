@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "../hardware/botoes.h"
+#include "../hardware/leds.h"
 #include "../hardware/timer.h"
 
 namespace {
@@ -13,9 +14,6 @@ constexpr uint32_t TEMPO_RESPOSTA = 3000;
 constexpr uint32_t TEMPO_LED_ACESO = 500;
 constexpr uint32_t TEMPO_LED_APAGADO = 250;
 constexpr uint32_t PAUSA_RODADA = 800;
-constexpr uint8_t LEDS = 0b01111000;
-const uint8_t LED[4] = {PD6, PD5, PD4, PD3};
-
 enum EstadoMemory {
   MEMORY_PREPARANDO,
   MEMORY_ACENDE_LED,
@@ -43,8 +41,7 @@ void imprimirRodada(void) {
 }
 
 void iniciarMemory(void) {
-  DDRD |= LEDS;
-  PORTD &= ~LEDS;
+  apagarTodosLeds();
 
   for (uint8_t i = 0; i < TAMANHO_SEQUENCIA; i++) {
     sequencia[i] = rand() % 4;
@@ -72,14 +69,14 @@ StatusFase memoryFase(void) {
       break;
 
     case MEMORY_ACENDE_LED:
-      PORTD |= (1 << LED[sequencia[posicao]]);
+      acenderLed(sequencia[posicao]);
       referenciaTempo = agora;
       estado = MEMORY_LED_ACESO;
       break;
 
     case MEMORY_LED_ACESO:
       if (agora - referenciaTempo >= TEMPO_LED_ACESO) {
-        PORTD &= ~(1 << LED[sequencia[posicao]]);
+        apagarLed(sequencia[posicao]);
         referenciaTempo = agora;
         estado = MEMORY_LED_APAGADO;
       }
@@ -101,10 +98,10 @@ StatusFase memoryFase(void) {
     case MEMORY_ESPERA_BOTAO:
       if (aperto >= 0) {
         apertado = aperto;
-        PORTD |= (1 << LED[apertado]);
+        acenderLed(apertado);
         estado = MEMORY_SEGURANDO;
       } else if (agora - referenciaTempo >= TEMPO_RESPOSTA) {
-        PORTD &= ~LEDS;
+        apagarTodosLeds();
         Serial.println("Demorou demais!");
         return FASE_ERROU;
       }
@@ -112,7 +109,7 @@ StatusFase memoryFase(void) {
 
     case MEMORY_SEGURANDO:
       if (botaoAtual() == -1) {
-        PORTD &= ~(1 << LED[apertado]);
+        apagarLed(apertado);
 
         if (apertado != sequencia[posicao]) {
           Serial.println("Botao errado!");
@@ -124,7 +121,7 @@ StatusFase memoryFase(void) {
           referenciaTempo = agora;
           estado = MEMORY_ESPERA_BOTAO;
         } else if (rodada == TAMANHO_SEQUENCIA) {
-          PORTD &= ~LEDS;
+          apagarTodosLeds();
           Serial.println("Fase Memory concluida!");
           return FASE_VENCEU;
         } else {
