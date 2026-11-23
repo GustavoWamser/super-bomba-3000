@@ -2,13 +2,11 @@
 #include <util/delay.h>
 #include <stdlib.h>
 #include "../hardware/adc.h"
+#include "../hardware/lerTeclado.h"
+#include "../hardware/bits.h"
 
 #define TOTAL_OPERACOES 10
 #define OPERACOES_POR_FASE 5
-
-#define set_bit(reg, bit) ((reg) |= (1 << (bit)))
-#define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
-#define tst_bit(reg, bit) ((reg) & (1 << (bit)))
 
 const uint8_t pinosLinhas[4] = {PB4, PB2, PB1, PB0};
 const uint8_t pinosColunas[4] = {PB5, PD7, PC3, PC2};
@@ -80,41 +78,6 @@ void setup() {
 void loop() {
   mathFase();
   _delay_ms(1000);
-}
-
-char lerTeclado(void) {
-  static char ultimaTecla = '\0';
-  char teclaPressionada = '\0';
-
-  for (int linha = 0; linha < 4; linha++) {
-    clr_bit(PORTB, pinosLinhas[linha]);
-    _delay_us(1);
-
-    for (int coluna = 0; coluna < 4; coluna++) {
-      if (coluna < 1) {
-        if (!(tst_bit(PINB, pinosColunas[coluna]))) {
-          teclaPressionada = teclas[linha][coluna];
-        }
-      } else if (coluna < 2) {
-        if (!(tst_bit(PIND, pinosColunas[coluna]))) {
-          teclaPressionada = teclas[linha][coluna];
-        }
-      } else {
-        if (!(tst_bit(PINC, pinosColunas[coluna]))) {
-          teclaPressionada = teclas[linha][coluna];
-        }
-      }
-    }
-
-    set_bit(PORTB, pinosLinhas[linha]);
-  }
-
-  if (ultimaTecla != teclaPressionada) {
-    ultimaTecla = teclaPressionada;
-    return teclaPressionada;
-  }
-
-  return '\0';
 }
 
 uint8_t sorteiaOperacao(uint8_t sorteadas[]) {

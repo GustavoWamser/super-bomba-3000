@@ -1,5 +1,6 @@
 #include "adc.h"
 #include <avr/io.h>
+#include "bits.h"
 
 uint16_t meu_analogRead(uint8_t canal) {
   ADMUX = (ADMUX & 0xF0) | canal;

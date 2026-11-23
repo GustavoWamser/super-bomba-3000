@@ -2,14 +2,10 @@
 #include <avr/interrupt.h>
 #include <stdlib.h>
 #include "../hardware/adc.h"
+#include "../hardware/bits.h"
 
 #define TAMANHO_FINAL 7
 #define TEMPO_RESPOSTA 3000 // ms
-
-// Macros
-#define set_bit(reg, bit) ((reg) |= (1 << (bit)))
-#define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
-#define tst_bit(reg, bit) ((reg) & (1 << (bit)))
 
 uint8_t led[4] = {PD6, PD5, PD4, PD3}; // azul, amarelo, verde, laranja
 uint8_t sequencia[TAMANHO_FINAL];
@@ -71,8 +67,6 @@ void espera_soltar() {
   while (le_botao() != -1);
   espera(20);
 }
-
-
 
 void pisca_todos(uint8_t vezes, uint16_t intervalo) {
   for (uint8_t i = 0; i < vezes; i++) {

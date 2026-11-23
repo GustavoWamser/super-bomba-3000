@@ -1,10 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include "../hardware/adc.h"
-
-#define set_bit(reg, bit) ((reg) |= (1 << (bit)))
-#define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
-#define tst_bit(reg, bit) ((reg) & (1 << (bit)))
+#include "../hardware/bits.h"
 
 const uint8_t pinosLinhas[4] = {PB4, PB2, PB1, PB0};
 const uint8_t pinosColunas[4] = {PB5, PD7, PC3, PC2};
