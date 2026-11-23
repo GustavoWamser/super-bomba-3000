@@ -30,7 +30,7 @@ void iniciarReflex(void) {
   sorteado = -1;
   referenciaTempo = tempoAtual();
   estado = REFLEX_PREPARANDO;
-  Serial.println("Fase Reflex iniciando...");
+  Serial.println(F("Fase Reflex iniciando..."));
 }
 
 StatusFase reflexFase(void) {
@@ -51,7 +51,7 @@ StatusFase reflexFase(void) {
   if (aperto == -1) {
     if (agora - referenciaTempo >= TEMPO_MAXIMO) {
       apagarTodosLeds();
-      Serial.println("Demorou demais!");
+      Serial.println(F("Demorou demais!"));
       return FASE_ERROU;
     }
     return FASE_RODANDO;
@@ -59,18 +59,18 @@ StatusFase reflexFase(void) {
 
   apagarTodosLeds();
   if (aperto != sorteado) {
-    Serial.println("Botao errado!");
+    Serial.println(F("Botao errado!"));
     return FASE_ERROU;
   }
 
   acertos++;
-  Serial.print("Acertou! ");
+  Serial.print(F("Acertou! "));
   Serial.print(acertos);
-  Serial.print("/");
+  Serial.print(F("/"));
   Serial.println(ACERTOS_PARA_PASSAR);
 
   if (acertos >= ACERTOS_PARA_PASSAR) {
-    Serial.println("Fase Reflex concluida!");
+    Serial.println(F("Fase Reflex concluida!"));
     return FASE_VENCEU;
   }
 

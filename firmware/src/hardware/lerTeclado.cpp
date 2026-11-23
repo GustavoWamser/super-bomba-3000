@@ -3,6 +3,16 @@
 #include "bits.h"
 #include <util/delay.h>
 
+const uint8_t pinosLinhas[4] = {PB4, PB2, PB1, PB0};
+const uint8_t pinosColunas[4] = {PB5, PD7, PC3, PC2};
+
+const char teclas[4][4] = {
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
 char lerTeclado(void) {
   static char ultimaTecla = '\0';
   char teclaPressionada = '\0';
@@ -37,16 +47,6 @@ char lerTeclado(void) {
 
   return '\0';
 }
-
-const uint8_t pinosLinhas[4] = {PB4, PB2, PB1, PB0};
-const uint8_t pinosColunas[4] = {PB5, PD7, PC3, PC2};
-
-const char teclas[4][4] = {
-  {'1', '2', '3', 'A'},
-  {'4', '5', '6', 'B'},
-  {'7', '8', '9', 'C'},
-  {'*', '0', '#', 'D'}
-};
 
 void configurarTeclado()  {
   // Definindo as linhas como saídas (Reg. DDRx = 1)

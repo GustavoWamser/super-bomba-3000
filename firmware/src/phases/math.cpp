@@ -49,7 +49,7 @@ StatusFase mathFase() {
   static bool operacaoExibida = false;
 
   if (numero >= OPERACOES_POR_FASE) {
-    Serial.println("Passou de fase!");
+    Serial.println(F("Passou de fase!"));
     return FASE_VENCEU;
   }
 
@@ -57,13 +57,13 @@ StatusFase mathFase() {
     indice = sorteiaOperacao(sorteadas);
 
     Serial.println();
-    Serial.print("Operacao ");
+    Serial.print(F("Operacao "));
     Serial.print(numero + 1);
-    Serial.print("/");
+    Serial.print(F("/"));
     Serial.println(OPERACOES_POR_FASE);
-    Serial.println("Calcule:");
+    Serial.println(F("Calcule:"));
     Serial.println(operacoes[indice].conta);
-    Serial.println("Digite a resposta e pressione #:");
+    Serial.println(F("Digite a resposta e pressione #:"));
 
     resposta = 0;
     quantidade = 0;
@@ -79,21 +79,21 @@ StatusFase mathFase() {
   } else if (tecla == '*' && quantidade > 0) {
     resposta /= 10;
     quantidade--;
-    Serial.print("\b \b");
+    Serial.print(F("\b \b"));
   } else if (tecla == '#' && quantidade > 0) {
     Serial.println();
 
     if (resposta == operacoes[indice].resultado) {
-      Serial.println("Acertou!");
+      Serial.println(F("Acertou!"));
       numero++;
       operacaoExibida = false;
 
       if (numero >= OPERACOES_POR_FASE) {
-        Serial.println("Passou de fase!");
+        Serial.println(F("Passou de fase!"));
         return FASE_VENCEU;
       }
     } else {
-      Serial.println("Errou! Tente novamente.");
+      Serial.println(F("Errou! Tente novamente."));
       resposta = 0;
       quantidade = 0;
       return FASE_ERROU;
