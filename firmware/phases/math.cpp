@@ -4,6 +4,7 @@
 #include "../hardware/adc.h"
 #include "../hardware/lerTeclado.h"
 #include "../hardware/bits.h"
+#include "math.h"
 
 #define TOTAL_OPERACOES 10
 #define OPERACOES_POR_FASE 5
@@ -27,7 +28,7 @@ const Operacao operacoes[TOTAL_OPERACOES] = {
 };
 
 
-uint8_t sorteiaOperacao(uint8_t sorteadas[]) {
+static uint8_t sorteiaOperacao(uint8_t sorteadas[]) {
   uint8_t indice;
 
   do {
@@ -38,7 +39,7 @@ uint8_t sorteiaOperacao(uint8_t sorteadas[]) {
   return indice;
 }
 
-bool mathFase() {
+StatusFase mathFase() {
   static uint8_t sorteadas[TOTAL_OPERACOES] = {0};
   static uint8_t numero = 0;
   static uint8_t indice;
@@ -48,7 +49,7 @@ bool mathFase() {
 
   if (numero >= OPERACOES_POR_FASE) {
     Serial.println("Passou de fase!");
-    return true;
+    return FASE_VENCEU;
   }
 
   if (!operacaoExibida) {
@@ -88,14 +89,15 @@ bool mathFase() {
 
       if (numero >= OPERACOES_POR_FASE) {
         Serial.println("Passou de fase!");
-        return true;
+        return FASE_VENCEU;
       }
     } else {
       Serial.println("Errou! Tente novamente.");
       resposta = 0;
       quantidade = 0;
+      return FASE_ERROU;
     }
   }
 
-  return false;
+  return FASE_RODANDO;
 }
