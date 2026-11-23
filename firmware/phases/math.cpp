@@ -26,18 +26,6 @@ const Operacao operacoes[TOTAL_OPERACOES] = {
   {"6 + 9 x 5 - 27 / 3", 42}
 };
 
-void setup() {
-  Serial.begin(9600);
-  configurarTeclado();
-  configurarADC();
-  lerTeclado();
-  srand(meu_analogRead(0));
-}
-
-void loop() {
-  mathFase();
-  _delay_ms(1000);
-}
 
 uint8_t sorteiaOperacao(uint8_t sorteadas[]) {
   uint8_t indice;
@@ -50,70 +38,64 @@ uint8_t sorteiaOperacao(uint8_t sorteadas[]) {
   return indice;
 }
 
-uint32_t lerResposta() {
-  uint32_t resposta = 0;
-  uint8_t quantidade = 0;
+bool mathFase() {
+  static uint8_t sorteadas[TOTAL_OPERACOES] = {0};
+  static uint8_t numero = 0;
+  static uint8_t indice;
+  static uint32_t resposta = 0;
+  static uint8_t quantidade = 0;
+  static bool operacaoExibida = false;
 
-  Serial.println("Digite a resposta e pressione #:");
-
-  while (1) {
-    char tecla = lerTeclado();
-
-    if (tecla >= '0' && tecla <= '9') {
-      if (quantidade < 5) {
-        resposta = resposta * 10 + (tecla - '0');
-        quantidade++;
-        Serial.print(tecla);
-      }
-    } else if (tecla == '*' && quantidade > 0) {
-      resposta /= 10;
-      quantidade--;
-      Serial.print("\b \b");
-    } else if (tecla == '#' && quantidade > 0) {
-      Serial.println();
-      return resposta;
-    }
+  if (numero >= OPERACOES_POR_FASE) {
+    Serial.println("Passou de fase!");
+    return true;
   }
-}
 
-uint8_t mostrarOperacao(uint8_t numero, uint8_t indice) {
-  const Operacao &operacao = operacoes[indice];
-  uint32_t resposta;
+  if (!operacaoExibida) {
+    indice = sorteiaOperacao(sorteadas);
 
-  Serial.println();
-  Serial.print("Operacao ");
-  Serial.print(numero);
-  Serial.print("/");
-  Serial.println(OPERACOES_POR_FASE);
-  Serial.println("Calcule:");
-  Serial.println(operacao.conta);
+    Serial.println();
+    Serial.print("Operacao ");
+    Serial.print(numero + 1);
+    Serial.print("/");
+    Serial.println(OPERACOES_POR_FASE);
+    Serial.println("Calcule:");
+    Serial.println(operacoes[indice].conta);
+    Serial.println("Digite a resposta e pressione #:");
 
-  while (1) {
-    resposta = lerResposta();
+    resposta = 0;
+    quantidade = 0;
+    operacaoExibida = true;
+  }
 
-    if (resposta == operacao.resultado) {
+  char tecla = lerTeclado();
+
+  if (tecla >= '0' && tecla <= '9' && quantidade < 5) {
+    resposta = resposta * 10 + (tecla - '0');
+    quantidade++;
+    Serial.print(tecla);
+  } else if (tecla == '*' && quantidade > 0) {
+    resposta /= 10;
+    quantidade--;
+    Serial.print("\b \b");
+  } else if (tecla == '#' && quantidade > 0) {
+    Serial.println();
+
+    if (resposta == operacoes[indice].resultado) {
       Serial.println("Acertou!");
-      return 1;
+      numero++;
+      operacaoExibida = false;
+
+      if (numero >= OPERACOES_POR_FASE) {
+        Serial.println("Passou de fase!");
+        return true;
+      }
+    } else {
+      Serial.println("Errou! Tente novamente.");
+      resposta = 0;
+      quantidade = 0;
     }
-
-    Serial.println("Errou! Tente novamente.");
-  }
-}
-
-void mathFase() {
-  uint8_t sorteadas[TOTAL_OPERACOES] = {0};
-  uint8_t acertos = 0;
-
-  for (uint8_t numero = 1; numero <= OPERACOES_POR_FASE; numero++) {
-    uint8_t indice = sorteiaOperacao(sorteadas);
-    acertos += mostrarOperacao(numero, indice);
   }
 
-  Serial.println();
-  Serial.print("Pontuacao: ");
-  Serial.print(acertos);
-  Serial.print("/");
-  Serial.println(OPERACOES_POR_FASE);
-
-  Serial.println("Passou de fase!");
+  return false;
 }

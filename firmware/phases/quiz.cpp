@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include "../hardware/adc.h"
 #include "../hardware/lerTeclado.h"
 #include "../hardware/bits.h"
@@ -30,19 +31,6 @@ const struct PerguntaQuiz perguntas[TOTAL_PERGUNTAS] = {
   {"Chile", "A) Valparaiso", "B) Santiago", "C) Concepcion", "D) Antofagasta", 'B'}
 };
 
-void setup() {
-  Serial.begin(9600);
-  configurarTeclado();
-  configurarADC();
-  lerTeclado();
-  srand(meu_analogRead(0));
-}
-
-void loop() {
-  quizFase();
-  _delay_ms(1000);
-}
-
 uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
   uint8_t indice;
   do {
@@ -53,42 +41,57 @@ uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
   return indice;
 }
 
-void mostraPergunta(uint8_t numero, const struct PerguntaQuiz &pergunta) {
-  Serial.println();
-  Serial.print("Pergunta ");
-  Serial.print(numero);
-  Serial.print("/");
-  Serial.println(PERGUNTAS_POR_RODADA);
-  Serial.print("Qual e a capital de ");
-  Serial.print(pergunta.pais);
-  Serial.println("?");
-  Serial.println(pergunta.alternativaA);
-  Serial.println(pergunta.alternativaB);
-  Serial.println(pergunta.alternativaC);
-  Serial.println(pergunta.alternativaD);
-  Serial.println("Digite A, B, C ou D:");
+bool quizFase() {
+  static uint8_t sorteadas[TOTAL_PERGUNTAS] = {0};
+  static uint8_t numero = 0;
+  static uint8_t indice;
+  static bool perguntaExibida = false;
 
-  while (1) {
-    char resposta = lerTeclado();
-
-    if (resposta >= 'A' && resposta <= 'D') {
-      if (resposta == pergunta.alternativaCerta) {
-        Serial.println("Acertou!");
-        return;
-      }
-
-      Serial.println("Resposta errada! Tente novamente.");
-    }
-  }
-}
-
-void quizFase() {
-  uint8_t sorteadas[TOTAL_PERGUNTAS] = {0};
-
-  for (uint8_t numero = 1; numero <= PERGUNTAS_POR_RODADA; numero++) {
-    uint8_t indice = sorteiaPergunta(sorteadas);
-    mostraPergunta(numero, perguntas[indice]);
+  if (numero >= PERGUNTAS_POR_RODADA) {
+    Serial.println("Fase de capitais concluida!");
+    return true;
   }
 
-  Serial.println("Fase de capitais concluida!");
+  if (!perguntaExibida) {
+    indice = sorteiaPergunta(sorteadas);
+    const PerguntaQuiz &pergunta = perguntas[indice];
+
+    Serial.println();
+    Serial.print("Pergunta ");
+    Serial.print(numero + 1);
+    Serial.print("/");
+    Serial.println(PERGUNTAS_POR_RODADA);
+    Serial.print("Qual e a capital de ");
+    Serial.print(pergunta.pais);
+    Serial.println("?");
+    Serial.println(pergunta.alternativaA);
+    Serial.println(pergunta.alternativaB);
+    Serial.println(pergunta.alternativaC);
+    Serial.println(pergunta.alternativaD);
+    Serial.println("Digite A, B, C ou D:");
+
+    perguntaExibida = true;
+  }
+
+  char resposta = lerTeclado();
+
+  if (resposta < 'A' || resposta > 'D') {
+    return false;
+  }
+
+  if (resposta != perguntas[indice].alternativaCerta) {
+    Serial.println("Resposta errada! Tente novamente.");
+    return false;
+  }
+
+  Serial.println("Acertou!");
+  numero++;
+  perguntaExibida = false;
+
+  if (numero >= PERGUNTAS_POR_RODADA) {
+    Serial.println("Fase de capitais concluida!");
+    return true;
+  }
+
+  return false;
 }

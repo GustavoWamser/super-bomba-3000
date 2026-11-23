@@ -43,13 +43,6 @@ uint8_t mapaAtual;
 // Variável que vai dizer se o labirinto já foi concluido
 uint8_t estadoJogo = 0;
 
-void setup() {
-  Serial.begin(9600);
-  configurarTeclado();
-  configurarADC();
-  iniciarLabirinto();
-}
-
 void iniciarLabirinto(void) {
   srand(meu_analogRead(0));
   mapaAtual = rand() % 3;
@@ -116,14 +109,16 @@ uint8_t atualizarLabirinto(char Tecla) {
   return 0;
 }
 
-void loop() {
-  
-  char tecla = lerTeclado();
-  if (tecla != '\0') {
-    
-    if (!estadoJogo){
-      atualizarLabirinto(tecla);
-    };
+bool labirintoFase() {
+  if (estadoJogo) {
+    return true;
   }
-  _delay_ms(20);
+
+  char tecla = lerTeclado();
+
+  if (tecla != '\0') {
+    estadoJogo = atualizarLabirinto(tecla);
+  }
+
+  return estadoJogo;
 }
