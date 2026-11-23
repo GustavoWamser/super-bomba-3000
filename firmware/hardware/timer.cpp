@@ -3,16 +3,26 @@
 #include <avr/interrupt.h>
 #include <avr/io.h>
 
-static volatile uint16_t milissegundos = 0;
+static volatile uint32_t milissegundos = 0;
 static volatile bool passou1s = false;
 
 ISR(TIMER1_COMPA_vect) {
   milissegundos++;
 
-  if (milissegundos >= 1000) {
-    milissegundos = 0;
+  static uint16_t contadorSegundos = 0;
+  contadorSegundos++;
+
+  if (contadorSegundos >= 1000) {
+    contadorSegundos = 0;
     passou1s = true;
   }
+}
+
+uint32_t tempoAtual(void) {
+  cli();
+  uint32_t resultado = milissegundos;
+  sei();
+  return resultado;
 }
 
 void configurarTimer(void) {
