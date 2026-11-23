@@ -8,16 +8,6 @@
 #define TOTAL_OPERACOES 10
 #define OPERACOES_POR_FASE 5
 
-const uint8_t pinosLinhas[4] = {PB4, PB2, PB1, PB0};
-const uint8_t pinosColunas[4] = {PB5, PD7, PC3, PC2};
-
-char teclas[4][4] = {
-  {'1', '2', '3', 'A'},
-  {'4', '5', '6', 'B'},
-  {'7', '8', '9', 'C'},
-  {'*', '0', '#', 'D'}
-};
-
 struct Operacao {
   const char *conta;
   uint16_t resultado;
@@ -38,39 +28,8 @@ const Operacao operacoes[TOTAL_OPERACOES] = {
 
 void setup() {
   Serial.begin(9600);
-  
-  // Definindo as linhas como saídas (Reg. DDRx = 1)
-  set_bit(DDRB, PB4); // Pino 12 (PB4) - Linha 1
-  set_bit(DDRB, PB2); // Pino 10 (PB2) - Linha 2
-  set_bit(DDRB, PB1); // Pino 09 (PB1) - Linha 3
-  set_bit(DDRB, PB0); // Pino 08 (PB0) - Linha 4
-  
-  // Configurando saídas em nível lógico alto (Reg. PORTx = 1)
-  set_bit(PORTB, PB4); // Pino 12 (PB4) - Linha 1
-  set_bit(PORTB, PB2); // Pino 10 (PB2) - Linha 2
-  set_bit(PORTB, PB1); // Pino 09 (PB1) - Linha 3
-  set_bit(PORTB, PB0); // Pino 08 (PB0) - Linha 4
-  
-  // Definindo as colunas como entradas (Reg. DDRx = 0)
-  clr_bit(DDRB, PB5); // Pino 13 (PB5) - Coluna 1
-  clr_bit(DDRD, PD7); // Pino 07 (PD7) - Coluna 2
-  clr_bit(DDRC, PC3); // Pino A3 (PC3) - Coluna 3
-  clr_bit(DDRC, PC2); // Pino A2 (PC2) - Coluna 4
-  
-  // Configurando as colunas como input pull up (Reg. PORTx = 1)
-  set_bit(PORTB, PB5); // Pino 13 (PB5) - Coluna 1
-  set_bit(PORTD, PD7); // Pino 07 (PD7) - Coluna 2
-  set_bit(PORTC, PC3); // Pino A3 (PC3) - Coluna 3
-  set_bit(PORTC, PC2); // Pino A2 (PC2) - Coluna 4
-  
-  // Configurando o pino ADC para leitura aleatoria no labirinto
-  set_bit(ADCSRA, ADEN);  // Habilita o ADC
-  set_bit(ADCSRA, ADPS2); // Os ADPSn servem para configurar o clock do ADC 
-  set_bit(ADCSRA, ADPS1);
-  set_bit(ADCSRA, ADPS0);
-  set_bit(DIDR0, ADC0D);
-  ADMUX = (1 << REFS0);  // Deixa a referência como 5V
-  
+  configurarTeclado();
+  configurarADC();
   lerTeclado();
   srand(meu_analogRead(0));
 }

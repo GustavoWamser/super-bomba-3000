@@ -4,3 +4,5 @@
 #include <stdint.h>
 
 char lerTeclado(void);
+
+void configurarTeclado();
