@@ -4,6 +4,11 @@
 
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
+#include "hardware/timer.h"
+#include "phases/labyrinth.h"
+#include "phases/math.h"
+#include "phases/quiz.h"
+#include "system/fase_status.h"
 #include "system/menu.h"
 
 enum Fase {
@@ -20,11 +25,9 @@ static uint8_t quantidadeFases = 0;
 static uint8_t indiceFaseAtual = 0;
 static bool jogoIniciado = false;
 static bool faseInicializada = false;
+static uint8_t vidas = 3;
+static uint16_t tempo_jogo = 0;
 
-bool labirintoFase(void);
-void iniciarLabirinto(void);
-bool mathFase(void);
-bool quizFase(void);
 uint8_t fase_genius(void);
 uint8_t fase_reflexo(void);
 
@@ -43,14 +46,18 @@ static void sortearOrdemFases(void) {
 static void iniciarJogo(char dificuldade) {
   if (dificuldade == '1') {
     quantidadeFases = 3;
+    tempo_jogo = 180;
   } else if (dificuldade == '2') {
     quantidadeFases = 4;
+    tempo_jogo = 240;
   } else {
     quantidadeFases = 5;
+    tempo_jogo = 300;
   }
 
   sortearOrdemFases();
   indiceFaseAtual = 0;
+  vidas = 3;
   jogoIniciado = true;
   faseInicializada = false;
 
@@ -61,6 +68,7 @@ void setup() {
   Serial.begin(9600);
   configurarTeclado();
   configurarADC();
+  configurarTimer();
   srand(meu_analogRead(0));
 }
 
@@ -70,6 +78,17 @@ void loop() {
     if (dificuldade != '\0') {
       iniciarJogo(dificuldade);
     }
+    return;
+  }
+
+  if (timerPassou1s() && tempo_jogo > 0) {
+    tempo_jogo--;
+  }
+
+  if (tempo_jogo == 0) {
+    Serial.println("A bomba explodiu! Voce foi derrotado.");
+    jogoIniciado = false;
+    faseInicializada = false;
     return;
   }
 
@@ -88,18 +107,34 @@ void loop() {
     faseInicializada = true;
   }
 
-  bool faseConcluida = false;
+  StatusFase statusFase = FASE_RODANDO;
   if (faseAtual == LABIRINTO) {
-    faseConcluida = labirintoFase();
+    statusFase = labirintoFase();
   } else if (faseAtual == MATH) {
-    faseConcluida = mathFase();
+    statusFase = mathFase();
   } else if (faseAtual == QUIZ) {
-    faseConcluida = quizFase();
+    statusFase = quizFase();
   } else if (faseAtual == MEMORY || faseAtual == REFLEX) {
     // memory/reflex ainda são programas independentes com main() próprio.
   }
 
-  if (faseConcluida) {
+  if (statusFase == FASE_ERROU) {
+    vidas--;
+    tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
+
+    Serial.print("Erro! Vidas restantes: ");
+    Serial.println(vidas);
+    Serial.println("Voce perdeu 10 segundos.");
+
+    if (vidas == 0 || tempo_jogo == 0) {
+      Serial.println("Voce perdeu o jogo.");
+      jogoIniciado = false;
+      faseInicializada = false;
+      return;
+    }
+  }
+
+  if (statusFase == FASE_VENCEU) {
     indiceFaseAtual++;
     faseInicializada = false;
   }

@@ -3,6 +3,7 @@
 #include "../hardware/adc.h"
 #include "../hardware/bits.h"
 #include "../hardware/lerTeclado.h"
+#include "labyrinth.h"
 
 const char mapas [3][8][8] = {
   {{'+', '-', '-', '-', '-', '-', '-', '+'}, 
@@ -41,8 +42,6 @@ uint8_t jogadorColuna = 1;
 uint8_t mapaAtual;
 
 // Variável que vai dizer se o labirinto já foi concluido
-uint8_t estadoJogo = 0;
-
 void iniciarLabirinto(void) {
   srand(meu_analogRead(0));
   mapaAtual = rand() % 3;
@@ -51,7 +50,7 @@ void iniciarLabirinto(void) {
   desenharLabirinto();
 }
 
-void desenharLabirinto(){
+static void desenharLabirinto(){
   Serial.println();
   Serial.println();
   for (uint8_t l = 0; l < 8; l++) {
@@ -68,7 +67,7 @@ void desenharLabirinto(){
   }
 }
 
-uint8_t atualizarLabirinto(char Tecla) {
+static StatusFase atualizarLabirinto(char Tecla) {
   int8_t proxLinha = jogadorLinha;
   int8_t proxColuna = jogadorColuna;
   
@@ -90,35 +89,30 @@ uint8_t atualizarLabirinto(char Tecla) {
     	break;
     
     default:
-    	return 0;
+    return FASE_RODANDO;
   }
   if (mapas[mapaAtual][proxLinha][proxColuna] == ' ') {
   	jogadorLinha = proxLinha;
     jogadorColuna = proxColuna;
     desenharLabirinto();
-    return 0;
+    return FASE_RODANDO;
   }
   
   if (mapas[mapaAtual][proxLinha][proxColuna] == 'F') {
   	jogadorLinha = proxLinha;
     jogadorColuna = proxColuna;
     desenharLabirinto();
-    estadoJogo = 1;
-    return 1;
+    return FASE_VENCEU;
   }
-  return 0;
+  return FASE_ERROU;
 }
 
-bool labirintoFase() {
-  if (estadoJogo) {
-    return true;
-  }
-
+StatusFase labirintoFase() {
   char tecla = lerTeclado();
 
   if (tecla != '\0') {
-    estadoJogo = atualizarLabirinto(tecla);
+    return atualizarLabirinto(tecla);
   }
 
-  return estadoJogo;
+  return FASE_RODANDO;
 }

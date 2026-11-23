@@ -5,6 +5,7 @@
 #include "../hardware/adc.h"
 #include "../hardware/lerTeclado.h"
 #include "../hardware/bits.h"
+#include "quiz.h"
 
 #define TOTAL_PERGUNTAS 10
 #define PERGUNTAS_POR_RODADA 5
@@ -31,7 +32,7 @@ const struct PerguntaQuiz perguntas[TOTAL_PERGUNTAS] = {
   {"Chile", "A) Valparaiso", "B) Santiago", "C) Concepcion", "D) Antofagasta", 'B'}
 };
 
-uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
+static uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
   uint8_t indice;
   do {
     indice = rand() % TOTAL_PERGUNTAS;
@@ -41,7 +42,7 @@ uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
   return indice;
 }
 
-bool quizFase() {
+StatusFase quizFase() {
   static uint8_t sorteadas[TOTAL_PERGUNTAS] = {0};
   static uint8_t numero = 0;
   static uint8_t indice;
@@ -49,7 +50,7 @@ bool quizFase() {
 
   if (numero >= PERGUNTAS_POR_RODADA) {
     Serial.println("Fase de capitais concluida!");
-    return true;
+    return FASE_VENCEU;
   }
 
   if (!perguntaExibida) {
@@ -76,12 +77,12 @@ bool quizFase() {
   char resposta = lerTeclado();
 
   if (resposta < 'A' || resposta > 'D') {
-    return false;
+    return FASE_RODANDO;
   }
 
   if (resposta != perguntas[indice].alternativaCerta) {
     Serial.println("Resposta errada! Tente novamente.");
-    return false;
+    return FASE_ERROU;
   }
 
   Serial.println("Acertou!");
@@ -90,8 +91,8 @@ bool quizFase() {
 
   if (numero >= PERGUNTAS_POR_RODADA) {
     Serial.println("Fase de capitais concluida!");
-    return true;
+    return FASE_VENCEU;
   }
 
-  return false;
+  return FASE_RODANDO;
 }
