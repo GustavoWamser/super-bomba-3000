@@ -29,8 +29,17 @@ static uint8_t quantidadeFases = 0;
 static uint8_t indiceFaseAtual = 0;
 static bool jogoIniciado = false;
 static bool faseInicializada = false;
+static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
+
+static void finalizarJogo(const char *mensagem) {
+  jogoIniciado = false;
+  faseInicializada = false;
+  aguardandoReinicio = true;
+  Serial.println(mensagem);
+  Serial.println("Pressione uma tecla para voltar ao menu.");
+}
 
 static void sortearOrdemFases(void) {
   for (uint8_t i = 0; i < TOTAL_FASES; i++) {
@@ -61,6 +70,7 @@ static void iniciarJogo(char dificuldade) {
   vidas = 3;
   jogoIniciado = true;
   faseInicializada = false;
+  aguardandoReinicio = false;
 
   Serial.println("Jogo iniciado!");
 }
@@ -76,6 +86,13 @@ void setup() {
 }
 
 void loop() {
+  if (aguardandoReinicio) {
+    if (lerTeclado() != '\0') {
+      aguardandoReinicio = false;
+    }
+    return;
+  }
+
   if (!jogoIniciado) {
     char dificuldade = menu();
     if (dificuldade != '\0') {
@@ -89,16 +106,12 @@ void loop() {
   }
 
   if (tempo_jogo == 0) {
-    Serial.println("A bomba explodiu! Voce foi derrotado.");
-    jogoIniciado = false;
-    faseInicializada = false;
+    finalizarJogo("A bomba explodiu! Voce foi derrotado.");
     return;
   }
 
   if (indiceFaseAtual >= quantidadeFases) {
-    Serial.println("Parabens! Voce concluiu o jogo.");
-    jogoIniciado = false;
-    faseInicializada = false;
+    finalizarJogo("Parabens! Voce concluiu o jogo.");
     return;
   }
 
@@ -137,9 +150,7 @@ void loop() {
     Serial.println("Voce perdeu 10 segundos.");
 
     if (vidas == 0 || tempo_jogo == 0) {
-      Serial.println("Voce perdeu o jogo.");
-      jogoIniciado = false;
-      faseInicializada = false;
+      finalizarJogo("A bomba explodiu! Voce perdeu o jogo.");
       return;
     }
   }
