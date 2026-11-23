@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "memory.h"
 
 #include <avr/io.h>

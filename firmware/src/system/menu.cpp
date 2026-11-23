@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "menu.h"
 #include "../hardware/lerTeclado.h"
 

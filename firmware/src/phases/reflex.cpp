@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "reflex.h"
 
 #include <avr/io.h>
