@@ -1,14 +1,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include "../hardware/adc.h"
+#include "../hardware/bits.h"
 
 #define TAMANHO_FINAL 7
 #define TEMPO_RESPOSTA 3000 // ms
-
-// Macros
-#define set_bit(reg, bit) ((reg) |= (1 << (bit)))
-#define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
-#define tst_bit(reg, bit) ((reg) & (1 << (bit)))
 
 uint8_t led[4] = {PD6, PD5, PD4, PD3}; // azul, amarelo, verde, laranja
 uint8_t sequencia[TAMANHO_FINAL];
@@ -42,13 +39,6 @@ void envia_texto(const char *texto) {
   }
 }
 
-uint16_t meu_analogRead(uint8_t canal) {
-  ADMUX = (ADMUX & 0xF0) | canal; // escolhe A0..A5
-  set_bit(ADCSRA, ADSC);          // começa a conversão
-  while (tst_bit(ADCSRA, ADSC));  // espera terminar a leitura
-  return ADC;
-}
-
 int8_t le_faixa_adc(void) {
   uint16_t leitura_botao = meu_analogRead(1);
   if (leitura_botao >= 921) return -1; // Solto (~5,0 V -> 1023)
@@ -77,8 +67,6 @@ void espera_soltar() {
   while (le_botao() != -1);
   espera(20);
 }
-
-
 
 void pisca_todos(uint8_t vezes, uint16_t intervalo) {
   for (uint8_t i = 0; i < vezes; i++) {

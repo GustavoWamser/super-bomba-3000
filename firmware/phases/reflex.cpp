@@ -1,14 +1,10 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdlib.h>
+#include "../hardware/bits.h"
 
 #define TEMPO_MAXIMO 2000 // tempo pra apertar cada botao (ms)
 #define ACERTOS_PRA_PASSAR 7
-
-// Macros
-#define set_bit(reg, bit) ((reg) |= (1 << (bit)))
-#define clr_bit(reg, bit) ((reg) &= ~(1 << (bit)))
-#define tst_bit(reg, bit) ((reg) & (1 << (bit)))
 
 uint8_t led[4] = {PD6, PD5, PD4, PD3}; // azul, amarelo, verde, laranja
 
