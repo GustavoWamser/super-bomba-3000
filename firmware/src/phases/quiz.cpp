@@ -50,7 +50,7 @@ StatusFase quizFase() {
   static bool perguntaExibida = false;
 
   if (numero >= PERGUNTAS_POR_RODADA) {
-    Serial.println("Fase de capitais concluida!");
+    Serial.println(F("Fase de capitais concluida!"));
     return FASE_VENCEU;
   }
 
@@ -59,18 +59,18 @@ StatusFase quizFase() {
     const PerguntaQuiz &pergunta = perguntas[indice];
 
     Serial.println();
-    Serial.print("Pergunta ");
+    Serial.print(F("Pergunta "));
     Serial.print(numero + 1);
-    Serial.print("/");
+    Serial.print(F("/"));
     Serial.println(PERGUNTAS_POR_RODADA);
-    Serial.print("Qual e a capital de ");
+    Serial.print(F("Qual e a capital de "));
     Serial.print(pergunta.pais);
-    Serial.println("?");
+    Serial.println(F("?"));
     Serial.println(pergunta.alternativaA);
     Serial.println(pergunta.alternativaB);
     Serial.println(pergunta.alternativaC);
     Serial.println(pergunta.alternativaD);
-    Serial.println("Digite A, B, C ou D:");
+    Serial.println(F("Digite A, B, C ou D:"));
 
     perguntaExibida = true;
   }
@@ -82,16 +82,16 @@ StatusFase quizFase() {
   }
 
   if (resposta != perguntas[indice].alternativaCerta) {
-    Serial.println("Resposta errada! Tente novamente.");
+    Serial.println(F("Resposta errada! Tente novamente."));
     return FASE_ERROU;
   }
 
-  Serial.println("Acertou!");
+  Serial.println(F("Acertou!"));
   numero++;
   perguntaExibida = false;
 
   if (numero >= PERGUNTAS_POR_RODADA) {
-    Serial.println("Fase de capitais concluida!");
+    Serial.println(F("Fase de capitais concluida!"));
     return FASE_VENCEU;
   }
 

@@ -39,7 +39,7 @@ static void finalizarJogo(const char *mensagem) {
   faseInicializada = false;
   aguardandoReinicio = true;
   Serial.println(mensagem);
-  Serial.println("Pressione uma tecla para voltar ao menu.");
+  Serial.println(F("Pressione uma tecla para voltar ao menu."));
 }
 
 static void sortearOrdemFases(void) {
@@ -73,7 +73,7 @@ static void iniciarJogo(char dificuldade) {
   faseInicializada = false;
   aguardandoReinicio = false;
 
-  Serial.println("Jogo iniciado!");
+  Serial.println(F("Jogo iniciado!"));
 }
 
 void setup() {
@@ -146,9 +146,9 @@ void loop() {
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
     faseInicializada = false;
 
-    Serial.print("Erro! Vidas restantes: ");
+    Serial.print(F("Erro! Vidas restantes: "));
     Serial.println(vidas);
-    Serial.println("Voce perdeu 10 segundos.");
+    Serial.println(F("Voce perdeu 10 segundos."));
 
     if (vidas == 0 || tempo_jogo == 0) {
       finalizarJogo("A bomba explodiu! Voce perdeu o jogo.");
