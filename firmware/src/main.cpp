@@ -30,6 +30,8 @@ static uint8_t quantidadeFases = 0;
 static uint8_t indiceFaseAtual = 0;
 static bool jogoIniciado = false;
 static bool faseInicializada = false;
+static bool aguardandoInicioFase = false;
+static bool mensagemInicioFaseExibida = false;
 static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
@@ -37,6 +39,8 @@ static uint16_t tempo_jogo = 0;
 static void finalizarJogo(const char *mensagem) {
   jogoIniciado = false;
   faseInicializada = false;
+  aguardandoInicioFase = false;
+  mensagemInicioFaseExibida = false;
   aguardandoReinicio = true;
   Serial.println(mensagem);
   Serial.println(F("Pressione uma tecla para voltar ao menu."));
@@ -71,7 +75,12 @@ static void iniciarJogo(char dificuldade) {
   vidas = 3;
   jogoIniciado = true;
   faseInicializada = false;
+  aguardandoInicioFase = true;
+  mensagemInicioFaseExibida = false;
   aguardandoReinicio = false;
+
+  reiniciarMath();
+  reiniciarQuiz();
 
   Serial.println(F("Jogo iniciado!"));
 }
@@ -116,6 +125,21 @@ void loop() {
     return;
   }
 
+  if (aguardandoInicioFase) {
+    if (!mensagemInicioFaseExibida) {
+      Serial.println(F("Pressione um botao para iniciar a proxima fase."));
+      mensagemInicioFaseExibida = true;
+    }
+
+    if (lerTeclado() == '\0' && lerAperto() < 0) {
+      return;
+    }
+
+    aguardandoInicioFase = false;
+    mensagemInicioFaseExibida = false;
+    return;
+  }
+
   Fase faseAtual = ordemFases[indiceFaseAtual];
   if (!faseInicializada) {
     if (faseAtual == LABIRINTO) {
@@ -144,7 +168,12 @@ void loop() {
   if (statusFase == FASE_ERROU) {
     vidas--;
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
-    faseInicializada = false;
+
+    // O labirinto deve continuar no mesmo mapa e na mesma posicao.
+    // Memoria e Reflex reiniciam seus desafios quando a vida e perdida.
+    if (faseAtual == MEMORY || faseAtual == REFLEX) {
+      faseInicializada = false;
+    }
 
     Serial.print(F("Erro! Vidas restantes: "));
     Serial.println(vidas);
@@ -159,5 +188,7 @@ void loop() {
   if (statusFase == FASE_VENCEU) {
     indiceFaseAtual++;
     faseInicializada = false;
+    aguardandoInicioFase = true;
+    mensagemInicioFaseExibida = false;
   }
 }
