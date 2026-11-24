@@ -44,8 +44,9 @@ void imprimirRodada(void) {
 void iniciarMemory(void) {
   apagarTodosLeds();
 
-  for (uint8_t i = 0; i < TAMANHO_SEQUENCIA; i++) {
-    sequencia[i] = rand() % 4;
+  sequencia[0] = rand() % 4;
+  for (uint8_t i = 1; i < TAMANHO_SEQUENCIA; i++) {
+    sequencia[i] = sortearLedDiferente(sequencia[i - 1]);
   }
 
   rodada = 1;
