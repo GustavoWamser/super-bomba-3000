@@ -1,5 +1,5 @@
 #include "botoes.h"
-
+#include <Arduino.h>
 #include <avr/io.h>
 
 #include "adc.h"
@@ -57,8 +57,11 @@ int8_t lerAperto(void) {
   if (agora - mudouEm < TEMPO_DEBOUNCE) return -1;
   if (leitura == botaoEstavel) return -1;
 
+  int8_t anterior = botaoEstavel;
   botaoEstavel = leitura;
-  return botaoEstavel >= 0 ? botaoEstavel : -1;
+  // So conta como aperto novo se saiu do repouso
+  if (leitura >= 0 && anterior == -1) return leitura;
+  return -1;
 }
 
 int8_t botaoAtual(void) {
