@@ -34,6 +34,17 @@ static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
 
+static const __FlashStringHelper *nomeFase(Fase fase) {
+  switch (fase) {
+    case LABIRINTO: return F("LABIRINTO");
+    case MATH:      return F("MATEMATICA");
+    case MEMORY:    return F("MEMORIA");
+    case QUIZ:      return F("QUIZ DE CAPITAIS");
+    case REFLEX:    return F("REFLEXO");
+    default:        return F("");
+  }
+}
+
 // Contagem regressiva antes de Memory e Reflex
 static const uint8_t SEGUNDOS_CONTAGEM = 5;
 static bool contagemAtiva = false;
@@ -131,7 +142,9 @@ void loop() {
     contagemAtiva = true;
     contagemRestante = SEGUNDOS_CONTAGEM;
     contagemReferencia = agora;
-    Serial.println(F("Olhe para os LEDS e prepare a mao!"));
+    Serial.print(F("Proxima fase: "));
+    Serial.println(nomeFase(faseAtual));
+    Serial.println(F("Prepare as maos para apertar os botoes!"));
     Serial.println(contagemRestante);
   }
 

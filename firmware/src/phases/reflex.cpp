@@ -10,7 +10,7 @@
 
 namespace {
 
-constexpr uint32_t TEMPO_MAXIMO = 1000;
+constexpr uint32_t TEMPO_MAXIMO = 2000;
 constexpr uint8_t ACERTOS_PARA_PASSAR = 7;
 constexpr uint32_t PAUSA_ENTRE_LEDS = 400;
 int8_t ultimoLed = -1;   // guarda o LED da rodada anterior
