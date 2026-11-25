@@ -5,6 +5,7 @@
 
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
+#include "hardware/bomba.h"
 #include "hardware/botoes.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
@@ -89,6 +90,7 @@ void setup() {
   Serial.begin(9600);
   configurarTeclado();
   configurarADC();
+  configurarBomba();
   configurarBotoes();
   configurarLeds();
   configurarTimer();
@@ -106,8 +108,19 @@ void loop() {
   if (!jogoIniciado) {
     char dificuldade = menu();
     if (dificuldade != '\0') {
+      if (fioDesconectado()) {
+        Serial.println(F("Conecte o fio da bomba entre D2 e GND antes de iniciar."));
+        return;
+      }
+
+      bombaReset();
       iniciarJogo(dificuldade);
     }
+    return;
+  }
+
+  if (bombaAcionada()) {
+    finalizarJogo("A bomba explodiu! O fio foi desconectado.");
     return;
   }
 

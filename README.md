@@ -13,6 +13,7 @@ As fases são sorteadas e aparecem em ordem aleatória. Para vencer, é preciso 
 - Teclado matricial 4x4;
 - LEDs e Botões;
 - Monitor Serial, com comunicação em 9600 baud;
+- Fio de segurança entre D2 (PD2/INT0) e GND;
 - Arduino IDE ou Arduino CLI;
 
 ## 3. Como jogar
@@ -60,6 +61,15 @@ Cada erro faz o jogador perder uma vida e 10 segundos. Se as 3 vidas acabarem ou
 Ao concluir todas as fases da dificuldade escolhida, o jogador vence. Depois do fim da partida, pressione uma tecla para voltar ao menu.
 
 ## 4. Como compilar e executar
+
+### Fio da bomba
+
+Conecte o fio entre o pino D2 e o GND. O firmware usa o pull-up interno:
+
+- fio conectado: D2 lê nível baixo;
+- fio desconectado: D2 lê nível alto e dispara a interrupção `INT0`.
+
+O estado é conferido antes de iniciar cada partida. Durante o jogo, a ISR apenas registra o evento; o `loop()` principal encerra a partida e mostra a mensagem de explosão.
 
 ### Requisitos
 
