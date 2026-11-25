@@ -38,6 +38,7 @@ static bool mensagemInicioFaseExibida = false;
 static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
+static uint32_t referenciaTempoJogo = 0;
 
 static const __FlashStringHelper *nomeFase(Fase fase) {
   switch (fase) {
@@ -149,6 +150,7 @@ static void iniciarJogo(char dificuldade) {
 
   reiniciarMath();
   reiniciarQuiz();
+  referenciaTempoJogo = tempoAtual();
   Serial.println(F("Jogo iniciado!"));
   
 }
@@ -194,8 +196,13 @@ void loop() {
     return;
   }
 
-  if (timerPassou1s() && tempo_jogo > 0) {
-    tempo_jogo--;
+  uint32_t agora = tempoAtual();
+  uint32_t segundosDecorridos = (agora - referenciaTempoJogo) / 1000;
+  if (segundosDecorridos > 0 && tempo_jogo > 0) {
+    referenciaTempoJogo += segundosDecorridos * 1000;
+    tempo_jogo = segundosDecorridos >= tempo_jogo
+                     ? 0
+                     : tempo_jogo - segundosDecorridos;
     atualizarTempoDisplay(tempo_jogo);
   }
 
