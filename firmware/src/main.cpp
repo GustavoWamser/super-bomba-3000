@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <avr/io.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "hardware/lerTeclado.h"
@@ -9,6 +10,7 @@
 #include "hardware/botoes.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
+#include "hardware/display.h"
 #include "phases/labyrinth.h"
 #include "phases/math.h"
 #include "phases/memory.h"
@@ -54,6 +56,50 @@ static bool contagemAtiva = false;
 static uint8_t contagemRestante = 0;
 static uint32_t contagemReferencia = 0;
 
+static void reiniciarPartida(void) {
+  jogoIniciado = false;
+  faseInicializada = false;
+  aguardandoReinicio = false;
+  contagemAtiva = false;
+
+  vidas = 3;
+  tempo_jogo = 0;
+  indiceFaseAtual = 0;
+  apagarTodosLeds();
+  desligarDisplay();
+}
+
+static const uint8_t TAM_BUFFER = 8;
+
+static void verificarSerial(void) {
+  static char buffer[TAM_BUFFER];
+  static uint8_t indice = 0;
+
+  while (Serial.available() > 0) {
+    char caractere = Serial.read();
+
+    if (caractere == '\r' || caractere == '\n') {
+      if (indice == 0) {
+        return; 
+      }
+
+      buffer[indice] = '\0';
+
+      if (indice == 1 && (buffer[0] == 'R' || buffer[0] == 'r')) {
+        reiniciarPartida();
+      } else {
+        Serial.println(F("Comando invalido"));
+      }
+
+      indice = 0;  
+    } else if (indice < TAM_BUFFER - 1) {
+      buffer[indice] = caractere;
+      indice++;
+    }
+    // se o buffer encheu, o caractere e descartado e o indice nao avanca
+  }
+}
+
 static void finalizarJogo(const char *mensagem) {
   jogoIniciado = false;
   faseInicializada = false;
@@ -97,11 +143,14 @@ static void iniciarJogo(char dificuldade) {
   aguardandoInicioFase = true;
   mensagemInicioFaseExibida = false;
   aguardandoReinicio = false;
+  ligarDisplayJogo();
+  atualizarVidasDisplay(vidas);
+  atualizarTempoDisplay(tempo_jogo);
 
   reiniciarMath();
   reiniciarQuiz();
-
   Serial.println(F("Jogo iniciado!"));
+  
 }
 
 void setup() {
@@ -111,14 +160,17 @@ void setup() {
   configurarBomba();
   configurarBotoes();
   configurarLeds();
+  configurarDisplay();
   configurarTimer();
   srand(meu_analogRead(0));
 }
 
 void loop() {
+  verificarSerial();
   if (aguardandoReinicio) {
     if (lerTeclado() != '\0') {
       aguardandoReinicio = false;
+      desligarDisplay();
     }
     return;
   }
@@ -144,9 +196,13 @@ void loop() {
 
   if (timerPassou1s() && tempo_jogo > 0) {
     tempo_jogo--;
+    atualizarTempoDisplay(tempo_jogo);
   }
 
   if (tempo_jogo == 0) {
+    vidas = 0;
+    atualizarVidasDisplay(vidas);
+    atualizarTempoDisplay(tempo_jogo);
     finalizarJogo("A bomba explodiu! Voce foi derrotado.");
     return;
   }
@@ -185,7 +241,7 @@ void loop() {
     Serial.println(contagemRestante);
   }
 
-  lerAperto();  // mantem o debounce em dia e descarta apertos antecipados
+  lerAperto();
 
   if (agora - contagemReferencia >= 1000) {
     contagemReferencia = agora;
@@ -225,7 +281,9 @@ void loop() {
 
   if (statusFase == FASE_ERROU) {
     vidas--;
+    atualizarVidasDisplay(vidas);
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
+    atualizarTempoDisplay(tempo_jogo);
 
     // O labirinto deve continuar no mesmo mapa e na mesma posicao.
     // Memoria e Reflex reiniciam seus desafios quando a vida e perdida.
@@ -238,6 +296,7 @@ void loop() {
     Serial.println(F("Voce perdeu 10 segundos."));
 
     if (vidas == 0 || tempo_jogo == 0) {
+      atualizarTempoDisplay(0);
       finalizarJogo("A bomba explodiu! Voce perdeu o jogo.");
       return;
     }
