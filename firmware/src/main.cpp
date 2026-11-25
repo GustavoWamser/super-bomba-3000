@@ -1,14 +1,17 @@
 #include <Arduino.h>
 #include <avr/io.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
-#include "hardware/bomba.h"
 #include "hardware/botoes.h"
+#include "hardware/buzzer.h"
+#include "hardware/fio.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
+#include "hardware/display.h"
 #include "phases/labyrinth.h"
 #include "phases/math.h"
 #include "phases/memory.h"
@@ -31,8 +34,6 @@ static uint8_t quantidadeFases = 0;
 static uint8_t indiceFaseAtual = 0;
 static bool jogoIniciado = false;
 static bool faseInicializada = false;
-static bool aguardandoInicioFase = false;
-static bool mensagemInicioFaseExibida = false;
 static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
@@ -54,14 +55,68 @@ static bool contagemAtiva = false;
 static uint8_t contagemRestante = 0;
 static uint32_t contagemReferencia = 0;
 
-static void finalizarJogo(const char *mensagem) {
+static void reiniciarPartida(void) {
+  desarmarFio();
+  desligarBuzzer();
   jogoIniciado = false;
   faseInicializada = false;
-  aguardandoInicioFase = false;
-  mensagemInicioFaseExibida = false;
+  aguardandoReinicio = false;
+  contagemAtiva = false;
+
+  vidas = 3;
+  tempo_jogo = 0;
+  indiceFaseAtual = 0;
+  apagarTodosLeds();
+  desligarDisplay();
+}
+
+static const uint8_t TAM_BUFFER = 8;
+
+static void verificarSerial(void) {
+  static char buffer[TAM_BUFFER];
+  static uint8_t indice = 0;
+
+  while (Serial.available() > 0) {
+    char caractere = Serial.read();
+
+    if (caractere == '\r' || caractere == '\n') {
+      if (indice == 0) {
+        return; 
+      }
+
+      buffer[indice] = '\0';
+
+      if (indice == 1 && (buffer[0] == 'R' || buffer[0] == 'r')) {
+        reiniciarPartida();
+      } else {
+        Serial.println(F("Comando invalido"));
+      }
+
+      indice = 0;  
+    } else if (indice < TAM_BUFFER - 1) {
+      buffer[indice] = caractere;
+      indice++;
+    }
+    // se o buffer encheu, o caractere e descartado e o indice nao avanca
+  }
+}
+
+static void finalizarJogo(const char *mensagem) {
+  desarmarFio();
+  jogoIniciado = false;
+  faseInicializada = false;
   aguardandoReinicio = true;
   Serial.println(mensagem);
   Serial.println(F("Pressione uma tecla para voltar ao menu."));
+}
+
+static void explodirPorFio(void) {
+  vidas = 0;
+  tempo_jogo = 0;
+  atualizarVidasDisplay(vidas);
+  atualizarTempoDisplay(tempo_jogo);
+  tocarAlarmeBuzzer();
+  finalizarJogo("A bomba explodiu! O fio foi puxado.");
 }
 
 static void sortearOrdemFases(void) {
@@ -77,6 +132,11 @@ static void sortearOrdemFases(void) {
 }
 
 static void iniciarJogo(char dificuldade) {
+  if (!armarFio()) {
+    Serial.println(F("Conecte o fio no pino 2 e escolha a dificuldade novamente."));
+    return;
+  }
+  desligarBuzzer();
   if (dificuldade == '1') {
     quantidadeFases = 3;
     tempo_jogo = 180;
@@ -94,31 +154,34 @@ static void iniciarJogo(char dificuldade) {
   contagemAtiva = false;
   jogoIniciado = true;
   faseInicializada = false;
-  aguardandoInicioFase = true;
-  mensagemInicioFaseExibida = false;
   aguardandoReinicio = false;
-
-  reiniciarMath();
-  reiniciarQuiz();
-
+  ligarDisplayJogo();
+  atualizarVidasDisplay(vidas);
+  atualizarTempoDisplay(tempo_jogo);
   Serial.println(F("Jogo iniciado!"));
+  
 }
 
 void setup() {
   Serial.begin(9600);
   configurarTeclado();
   configurarADC();
-  configurarBomba();
   configurarBotoes();
+  configurarBuzzer();
+  configurarFio();
   configurarLeds();
+  configurarDisplay();
   configurarTimer();
   srand(meu_analogRead(0));
 }
 
 void loop() {
+  verificarSerial();
   if (aguardandoReinicio) {
     if (lerTeclado() != '\0') {
       aguardandoReinicio = false;
+      desligarBuzzer();
+      desligarDisplay();
     }
     return;
   }
@@ -126,50 +189,41 @@ void loop() {
   if (!jogoIniciado) {
     char dificuldade = menu();
     if (dificuldade != '\0') {
-      if (fioDesconectado()) {
-        Serial.println(F("Conecte o fio da bomba entre D2 e GND antes de iniciar."));
-        return;
-      }
-
-      bombaReset();
       iniciarJogo(dificuldade);
     }
     return;
   }
 
-  if (bombaAcionada()) {
-    finalizarJogo("A bomba explodiu! O fio foi desconectado.");
+  if (fioFoiPuxado()) {
+    explodirPorFio();
     return;
   }
 
   if (timerPassou1s() && tempo_jogo > 0) {
     tempo_jogo--;
+    atualizarTempoDisplay(tempo_jogo);
   }
 
   if (tempo_jogo == 0) {
+    vidas = 0;
+    atualizarVidasDisplay(vidas);
+    atualizarTempoDisplay(tempo_jogo);
+    tocarAlarmeBuzzer();
     finalizarJogo("A bomba explodiu! Voce foi derrotado.");
     return;
   }
 
   if (indiceFaseAtual >= quantidadeFases) {
+    if (desarmarFio()) {
+      explodirPorFio();
+      return;
+    }
+    desligarBuzzer();
     finalizarJogo("Parabens! Voce concluiu o jogo.");
     return;
   }
 
-  if (aguardandoInicioFase) {
-    if (!mensagemInicioFaseExibida) {
-      Serial.println(F("Pressione um botao para iniciar a proxima fase."));
-      mensagemInicioFaseExibida = true;
-    }
-
-    if (lerTeclado() == '\0' && lerAperto() < 0) {
-      return;
-    }
-
-    aguardandoInicioFase = false;
-    mensagemInicioFaseExibida = false;
-    return;
-  }
+  avisarTempoBuzzer(tempo_jogo);
 
   Fase faseAtual = ordemFases[indiceFaseAtual];
   if (!faseInicializada && (faseAtual == MEMORY || faseAtual == REFLEX)) {
@@ -185,7 +239,7 @@ void loop() {
     Serial.println(contagemRestante);
   }
 
-  lerAperto();  // mantem o debounce em dia e descarta apertos antecipados
+  lerAperto();
 
   if (agora - contagemReferencia >= 1000) {
     contagemReferencia = agora;
@@ -225,28 +279,26 @@ void loop() {
 
   if (statusFase == FASE_ERROU) {
     vidas--;
+    atualizarVidasDisplay(vidas);
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
-
-    // O labirinto deve continuar no mesmo mapa e na mesma posicao.
-    // Memoria e Reflex reiniciam seus desafios quando a vida e perdida.
-    if (faseAtual == MEMORY || faseAtual == REFLEX) {
-      faseInicializada = false;
-    }
+    atualizarTempoDisplay(tempo_jogo);
+    faseInicializada = false;
 
     Serial.print(F("Erro! Vidas restantes: "));
     Serial.println(vidas);
     Serial.println(F("Voce perdeu 10 segundos."));
 
     if (vidas == 0 || tempo_jogo == 0) {
+      atualizarTempoDisplay(0);
+      tocarAlarmeBuzzer();
       finalizarJogo("A bomba explodiu! Voce perdeu o jogo.");
       return;
     }
+    avisarTempoBuzzer(tempo_jogo);
   }
 
   if (statusFase == FASE_VENCEU) {
     indiceFaseAtual++;
     faseInicializada = false;
-    aguardandoInicioFase = true;
-    mensagemInicioFaseExibida = false;
   }
 }
