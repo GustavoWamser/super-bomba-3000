@@ -9,11 +9,11 @@ static const uint8_t LINHAS = 4;
 
 // Layout (colunas 0-19, linhas 0-3)
 static const uint8_t LINHA_VIDAS = 0;
-static const uint8_t COLUNA_PRIMEIRA_VIDA = 13;
+static const uint8_t COLUNA_PRIMEIRA_VIDA = 17;
 static const uint8_t TOTAL_VIDAS = 3;
 
 static const uint8_t LINHA_TEMPO = 2;
-static const uint8_t COLUNA_INICIO_TEMPO = 5;    // Vai ser escrito no formato "0M:SS" a partir da coluna 6 (começa de 0)
+static const uint8_t COLUNA_INICIO_TEMPO = 7;    // Vai ser escrito no formato "0M:SS" a partir da coluna 6 (começa de 0)
 static const uint8_t COLUNA_ZERO_FIXO = COLUNA_INICIO_TEMPO;
 static const uint8_t COLUNA_MINUTO = COLUNA_INICIO_TEMPO + 1;
 static const uint8_t COLUNA_DOIS_PONTOS = COLUNA_INICIO_TEMPO + 2;
@@ -25,12 +25,26 @@ static LiquidCrystal_I2C lcd(ENDERECO_LCD, COLUNAS, LINHAS);
 void configurarDisplay(void) {
     lcd.init();
     lcd.clear();
+    lcd.noDisplay();
+    lcd.noBacklight();
+}
+
+void ligarDisplayJogo(void) {
+    lcd.clear();
+    lcd.display();
     lcd.backlight();
+
     lcd.setCursor(COLUNA_ZERO_FIXO, LINHA_TEMPO);
     lcd.print('0');
 
     lcd.setCursor(COLUNA_DOIS_PONTOS, LINHA_TEMPO);
     lcd.print(':');
+}
+
+void desligarDisplay(void) {
+    lcd.clear();
+    lcd.noDisplay();
+    lcd.noBacklight();
 }
 
 static void escreverTempo(uint16_t segundosTotais) {

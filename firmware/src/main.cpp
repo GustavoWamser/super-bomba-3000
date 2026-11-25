@@ -8,6 +8,7 @@
 #include "hardware/botoes.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
+#include "hardware/display.h"
 #include "phases/labyrinth.h"
 #include "phases/math.h"
 #include "phases/memory.h"
@@ -90,8 +91,11 @@ static void iniciarJogo(char dificuldade) {
   jogoIniciado = true;
   faseInicializada = false;
   aguardandoReinicio = false;
-
+  ligarDisplayJogo();
+  atualizarVidasDisplay(vidas);
+  atualizarTempoDisplay(tempo_jogo);
   Serial.println(F("Jogo iniciado!"));
+  
 }
 
 void setup() {
@@ -100,6 +104,7 @@ void setup() {
   configurarADC();
   configurarBotoes();
   configurarLeds();
+  configurarDisplay();
   configurarTimer();
   srand(meu_analogRead(0));
 }
@@ -108,6 +113,7 @@ void loop() {
   if (aguardandoReinicio) {
     if (lerTeclado() != '\0') {
       aguardandoReinicio = false;
+      desligarDisplay();
     }
     return;
   }
@@ -122,9 +128,13 @@ void loop() {
 
   if (timerPassou1s() && tempo_jogo > 0) {
     tempo_jogo--;
+    atualizarTempoDisplay(tempo_jogo);
   }
 
   if (tempo_jogo == 0) {
+    vidas = 0;
+    atualizarVidasDisplay(vidas);
+    atualizarTempoDisplay(tempo_jogo);
     finalizarJogo("A bomba explodiu! Voce foi derrotado.");
     return;
   }
@@ -148,7 +158,7 @@ void loop() {
     Serial.println(contagemRestante);
   }
 
-  lerAperto();  // mantem o debounce em dia e descarta apertos antecipados
+  lerAperto();
 
   if (agora - contagemReferencia >= 1000) {
     contagemReferencia = agora;
@@ -188,7 +198,9 @@ void loop() {
 
   if (statusFase == FASE_ERROU) {
     vidas--;
+    atualizarVidasDisplay(vidas);
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
+    atualizarTempoDisplay(tempo_jogo);
     faseInicializada = false;
 
     Serial.print(F("Erro! Vidas restantes: "));
@@ -196,6 +208,7 @@ void loop() {
     Serial.println(F("Voce perdeu 10 segundos."));
 
     if (vidas == 0 || tempo_jogo == 0) {
+      atualizarTempoDisplay(0);
       finalizarJogo("A bomba explodiu! Voce perdeu o jogo.");
       return;
     }
