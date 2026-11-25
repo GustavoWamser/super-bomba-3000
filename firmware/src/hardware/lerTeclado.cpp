@@ -1,6 +1,7 @@
 #include "lerTeclado.h"
 #include <avr/io.h>
 #include "bits.h"
+#include "timer.h"
 #include <util/delay.h>
 
 const uint8_t pinosLinhas[4] = {PB4, PB2, PB1, PB0};
@@ -16,6 +17,8 @@ const char teclas[4][4] = {
 char lerTeclado(void) {
   static char ultimaTecla = '\0';
   char teclaPressionada = '\0';
+  static char ultimaLeitura = '\0';
+  static uint32_t tempoAnterior = 0;
 
   for (int linha = 0; linha < 4; linha++) {
     clr_bit(PORTB, pinosLinhas[linha]);
@@ -36,13 +39,22 @@ char lerTeclado(void) {
         }
       }
     }
+  
 
     set_bit(PORTB, pinosLinhas[linha]);
   }
+  if (teclaPressionada != ultimaLeitura) {
+    ultimaLeitura = teclaPressionada;
+    tempoAnterior = tempoAtual();
+    return '\0';
+  }
 
-  if (ultimaTecla != teclaPressionada) {
-    ultimaTecla = teclaPressionada;
-    return teclaPressionada;
+  if (tempoAtual() - tempoAnterior >= 20) {
+    if (ultimaTecla != teclaPressionada) {
+      ultimaTecla = teclaPressionada;
+      return teclaPressionada;
+  }
+  
   }
 
   return '\0';

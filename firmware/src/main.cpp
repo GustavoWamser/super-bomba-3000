@@ -37,6 +37,23 @@ static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
 
+static const __FlashStringHelper *nomeFase(Fase fase) {
+  switch (fase) {
+    case LABIRINTO: return F("LABIRINTO");
+    case MATH:      return F("MATEMATICA");
+    case MEMORY:    return F("MEMORIA");
+    case QUIZ:      return F("QUIZ DE CAPITAIS");
+    case REFLEX:    return F("REFLEXO");
+    default:        return F("");
+  }
+}
+
+// Contagem regressiva antes de Memory e Reflex
+static const uint8_t SEGUNDOS_CONTAGEM = 5;
+static bool contagemAtiva = false;
+static uint8_t contagemRestante = 0;
+static uint32_t contagemReferencia = 0;
+
 static void finalizarJogo(const char *mensagem) {
   jogoIniciado = false;
   faseInicializada = false;
@@ -74,6 +91,7 @@ static void iniciarJogo(char dificuldade) {
   sortearOrdemFases();
   indiceFaseAtual = 0;
   vidas = 3;
+  contagemAtiva = false;
   jogoIniciado = true;
   faseInicializada = false;
   aguardandoInicioFase = true;
@@ -154,6 +172,33 @@ void loop() {
   }
 
   Fase faseAtual = ordemFases[indiceFaseAtual];
+  if (!faseInicializada && (faseAtual == MEMORY || faseAtual == REFLEX)) {
+  uint32_t agora = tempoAtual();
+
+  if (!contagemAtiva) {
+    contagemAtiva = true;
+    contagemRestante = SEGUNDOS_CONTAGEM;
+    contagemReferencia = agora;
+    Serial.print(F("Proxima fase: "));
+    Serial.println(nomeFase(faseAtual));
+    Serial.println(F("Prepare as maos para apertar os botoes!"));
+    Serial.println(contagemRestante);
+  }
+
+  lerAperto();  // mantem o debounce em dia e descarta apertos antecipados
+
+  if (agora - contagemReferencia >= 1000) {
+    contagemReferencia = agora;
+    contagemRestante--;
+    if (contagemRestante > 0) {
+      Serial.println(contagemRestante);
+    } else {
+      contagemAtiva = false;  // acabou: segue para a inicializacao da fase
+    }
+  }
+
+  if (contagemAtiva) return;
+  }
   if (!faseInicializada) {
     if (faseAtual == LABIRINTO) {
       iniciarLabirinto();
