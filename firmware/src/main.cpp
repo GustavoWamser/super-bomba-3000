@@ -66,15 +66,34 @@ static void reiniciarPartida(void) {
   desligarDisplay();
 }
 
+static const uint8_t TAM_BUFFER = 8;
+
 static void verificarSerial(void) {
-  if (Serial.available() > 0) {
-    char ultimoCaractere = Serial.read();
+  static char buffer[TAM_BUFFER];
+  static uint8_t indice = 0;
 
-    if (ultimoCaractere == '\r' || ultimoCaractere == '\n') return;
+  while (Serial.available() > 0) {
+    char caractere = Serial.read();
 
-    if (ultimoCaractere == 'R' || ultimoCaractere == 'r') {reiniciarPartida(); return;}
+    if (caractere == '\r' || caractere == '\n') {
+      if (indice == 0) {
+        return; 
+      }
 
-    else {Serial.println("Comando invalido");}
+      buffer[indice] = '\0';
+
+      if (indice == 1 && (buffer[0] == 'R' || buffer[0] == 'r')) {
+        reiniciarPartida();
+      } else {
+        Serial.println(F("Comando invalido"));
+      }
+
+      indice = 0;  
+    } else if (indice < TAM_BUFFER - 1) {
+      buffer[indice] = caractere;
+      indice++;
+    }
+    // se o buffer encheu, o caractere e descartado e o indice nao avanca
   }
 }
 
