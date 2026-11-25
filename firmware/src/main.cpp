@@ -8,7 +8,6 @@
 #include "hardware/adc.h"
 #include "hardware/botoes.h"
 #include "hardware/buzzer.h"
-#include "hardware/fio.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
 #include "hardware/display.h"
@@ -56,7 +55,6 @@ static uint8_t contagemRestante = 0;
 static uint32_t contagemReferencia = 0;
 
 static void reiniciarPartida(void) {
-  desarmarFio();
   desligarBuzzer();
   jogoIniciado = false;
   faseInicializada = false;
@@ -102,21 +100,11 @@ static void verificarSerial(void) {
 }
 
 static void finalizarJogo(const char *mensagem) {
-  desarmarFio();
   jogoIniciado = false;
   faseInicializada = false;
   aguardandoReinicio = true;
   Serial.println(mensagem);
   Serial.println(F("Pressione uma tecla para voltar ao menu."));
-}
-
-static void explodirPorFio(void) {
-  vidas = 0;
-  tempo_jogo = 0;
-  atualizarVidasDisplay(vidas);
-  atualizarTempoDisplay(tempo_jogo);
-  tocarAlarmeBuzzer();
-  finalizarJogo("A bomba explodiu! O fio foi puxado.");
 }
 
 static void sortearOrdemFases(void) {
@@ -132,10 +120,6 @@ static void sortearOrdemFases(void) {
 }
 
 static void iniciarJogo(char dificuldade) {
-  if (!armarFio()) {
-    Serial.println(F("Conecte o fio no pino 2 e escolha a dificuldade novamente."));
-    return;
-  }
   desligarBuzzer();
   if (dificuldade == '1') {
     quantidadeFases = 3;
@@ -168,7 +152,6 @@ void setup() {
   configurarADC();
   configurarBotoes();
   configurarBuzzer();
-  configurarFio();
   configurarLeds();
   configurarDisplay();
   configurarTimer();
@@ -194,11 +177,6 @@ void loop() {
     return;
   }
 
-  if (fioFoiPuxado()) {
-    explodirPorFio();
-    return;
-  }
-
   if (timerPassou1s() && tempo_jogo > 0) {
     tempo_jogo--;
     atualizarTempoDisplay(tempo_jogo);
@@ -214,10 +192,6 @@ void loop() {
   }
 
   if (indiceFaseAtual >= quantidadeFases) {
-    if (desarmarFio()) {
-      explodirPorFio();
-      return;
-    }
     desligarBuzzer();
     finalizarJogo("Parabens! Voce concluiu o jogo.");
     return;
