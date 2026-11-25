@@ -20,11 +20,6 @@ struct PerguntaQuiz {
   char alternativaCerta;
 };
 
-static uint8_t sorteadas[TOTAL_PERGUNTAS];
-static uint8_t numero = 0;
-static uint8_t indice;
-static bool perguntaExibida = false;
-
 const struct PerguntaQuiz perguntas[TOTAL_PERGUNTAS] = {
   {"Brasil", "A) Buenos Aires", "B) Brasilia", "C) Lima", "D) Bogota", 'B'},
   {"Argentina", "A) Santiago", "B) Montevideu", "C) Buenos Aires", "D) Assuncao", 'C'},
@@ -48,16 +43,12 @@ static uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
   return indice;
 }
 
-void reiniciarQuiz(void) {
-  for (uint8_t i = 0; i < TOTAL_PERGUNTAS; i++) {
-    sorteadas[i] = 0;
-  }
-  numero = 0;
-  indice = 0;
-  perguntaExibida = false;
-}
-
 StatusFase quizFase() {
+  static uint8_t sorteadas[TOTAL_PERGUNTAS] = {0};
+  static uint8_t numero = 0;
+  static uint8_t indice;
+  static bool perguntaExibida = false;
+
   if (numero >= PERGUNTAS_POR_RODADA) {
     Serial.println(F("Fase de capitais concluida!"));
     return FASE_VENCEU;

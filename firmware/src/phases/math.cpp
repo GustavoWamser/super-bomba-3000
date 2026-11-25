@@ -15,13 +15,6 @@ struct Operacao {
   uint16_t resultado;
 };
 
-static uint8_t sorteadas[TOTAL_OPERACOES];
-static uint8_t numero = 0;
-static uint8_t indice;
-static uint32_t resposta = 0;
-static uint8_t quantidade = 0;
-static bool operacaoExibida = false;
-
 const Operacao operacoes[TOTAL_OPERACOES] = {
   {"12 + 3 x 4 - 8 / 2", 20},
   {"25 + 6 x 5 - 12 / 3", 51},
@@ -47,18 +40,14 @@ static uint8_t sorteiaOperacao(uint8_t sorteadas[]) {
   return indice;
 }
 
-void reiniciarMath(void) {
-  for (uint8_t i = 0; i < TOTAL_OPERACOES; i++) {
-    sorteadas[i] = 0;
-  }
-  numero = 0;
-  indice = 0;
-  resposta = 0;
-  quantidade = 0;
-  operacaoExibida = false;
-}
-
 StatusFase mathFase() {
+  static uint8_t sorteadas[TOTAL_OPERACOES] = {0};
+  static uint8_t numero = 0;
+  static uint8_t indice;
+  static uint32_t resposta = 0;
+  static uint8_t quantidade = 0;
+  static bool operacaoExibida = false;
+
   if (numero >= OPERACOES_POR_FASE) {
     Serial.println(F("Passou de fase!"));
     return FASE_VENCEU;
