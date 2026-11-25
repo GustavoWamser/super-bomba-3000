@@ -10,8 +10,10 @@
 
 namespace {
 
-constexpr uint32_t TEMPO_MAXIMO = 1000;
+constexpr uint32_t TEMPO_MAXIMO = 2000;
 constexpr uint8_t ACERTOS_PARA_PASSAR = 7;
+constexpr uint32_t PAUSA_ENTRE_LEDS = 400;
+int8_t ultimoLed = -1;   // guarda o LED da rodada anterior
 enum EstadoReflex {
   REFLEX_PREPARANDO,
   REFLEX_ESPERANDO
@@ -28,6 +30,7 @@ void iniciarReflex(void) {
   apagarTodosLeds();
   acertos = 0;
   sorteado = -1;
+  ultimoLed = -1;
   referenciaTempo = tempoAtual();
   estado = REFLEX_PREPARANDO;
   Serial.println(F("Fase Reflex iniciando..."));
@@ -38,12 +41,13 @@ StatusFase reflexFase(void) {
   uint32_t agora = tempoAtual();
 
   if (estado == REFLEX_PREPARANDO) {
-    if (agora - referenciaTempo < 500) return FASE_RODANDO;
+    if (agora - referenciaTempo < PAUSA_ENTRE_LEDS) return FASE_RODANDO;
     estado = REFLEX_ESPERANDO;
   }
 
   if (sorteado == -1) {
-    sorteado = sortearLedDiferente(sorteado);
+    sorteado = sortearLedDiferente(ultimoLed);
+    ultimoLed = sorteado;
     acenderLed(sorteado);
     referenciaTempo = agora;
   }
@@ -75,5 +79,7 @@ StatusFase reflexFase(void) {
   }
 
   sorteado = -1;
+  estado = REFLEX_PREPARANDO;
+  referenciaTempo = agora;
   return FASE_RODANDO;
 }
