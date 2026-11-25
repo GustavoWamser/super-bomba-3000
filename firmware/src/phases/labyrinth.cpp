@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include "../hardware/adc.h"
@@ -41,7 +42,8 @@ uint8_t jogadorColuna = 1;
 // Variável que vai guardar o mapa sorteado
 uint8_t mapaAtual;
 
-// Variável que vai dizer se o labirinto já foi concluido
+static void desenharLabirinto();
+
 void iniciarLabirinto(void) {
   srand(meu_analogRead(0));
   mapaAtual = rand() % 3;

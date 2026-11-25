@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
@@ -18,6 +19,11 @@ struct PerguntaQuiz {
   const char *alternativaD;
   char alternativaCerta;
 };
+
+static uint8_t sorteadas[TOTAL_PERGUNTAS];
+static uint8_t numero = 0;
+static uint8_t indice;
+static bool perguntaExibida = false;
 
 const struct PerguntaQuiz perguntas[TOTAL_PERGUNTAS] = {
   {"Brasil", "A) Buenos Aires", "B) Brasilia", "C) Lima", "D) Bogota", 'B'},
@@ -42,14 +48,18 @@ static uint8_t sorteiaPergunta(uint8_t sorteadas[]) {
   return indice;
 }
 
-StatusFase quizFase() {
-  static uint8_t sorteadas[TOTAL_PERGUNTAS] = {0};
-  static uint8_t numero = 0;
-  static uint8_t indice;
-  static bool perguntaExibida = false;
+void reiniciarQuiz(void) {
+  for (uint8_t i = 0; i < TOTAL_PERGUNTAS; i++) {
+    sorteadas[i] = 0;
+  }
+  numero = 0;
+  indice = 0;
+  perguntaExibida = false;
+}
 
+StatusFase quizFase() {
   if (numero >= PERGUNTAS_POR_RODADA) {
-    Serial.println("Fase de capitais concluida!");
+    Serial.println(F("Fase de capitais concluida!"));
     return FASE_VENCEU;
   }
 
@@ -58,18 +68,18 @@ StatusFase quizFase() {
     const PerguntaQuiz &pergunta = perguntas[indice];
 
     Serial.println();
-    Serial.print("Pergunta ");
+    Serial.print(F("Pergunta "));
     Serial.print(numero + 1);
-    Serial.print("/");
+    Serial.print(F("/"));
     Serial.println(PERGUNTAS_POR_RODADA);
-    Serial.print("Qual e a capital de ");
+    Serial.print(F("Qual e a capital de "));
     Serial.print(pergunta.pais);
-    Serial.println("?");
+    Serial.println(F("?"));
     Serial.println(pergunta.alternativaA);
     Serial.println(pergunta.alternativaB);
     Serial.println(pergunta.alternativaC);
     Serial.println(pergunta.alternativaD);
-    Serial.println("Digite A, B, C ou D:");
+    Serial.println(F("Digite A, B, C ou D:"));
 
     perguntaExibida = true;
   }
@@ -81,16 +91,16 @@ StatusFase quizFase() {
   }
 
   if (resposta != perguntas[indice].alternativaCerta) {
-    Serial.println("Resposta errada! Tente novamente.");
+    Serial.println(F("Resposta errada! Tente novamente."));
     return FASE_ERROU;
   }
 
-  Serial.println("Acertou!");
+  Serial.println(F("Acertou!"));
   numero++;
   perguntaExibida = false;
 
   if (numero >= PERGUNTAS_POR_RODADA) {
-    Serial.println("Fase de capitais concluida!");
+    Serial.println(F("Fase de capitais concluida!"));
     return FASE_VENCEU;
   }
 

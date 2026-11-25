@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "memory.h"
 
 #include <avr/io.h>
@@ -32,9 +33,9 @@ int8_t apertado = -1;
 uint32_t referenciaTempo = 0;
 
 void imprimirRodada(void) {
-  Serial.print("Rodada ");
+  Serial.print(F("Rodada "));
   Serial.print(rodada);
-  Serial.print("/");
+  Serial.print(F("/"));
   Serial.println(TAMANHO_SEQUENCIA);
 }
 
@@ -53,7 +54,7 @@ void iniciarMemory(void) {
   referenciaTempo = tempoAtual();
   estado = MEMORY_PREPARANDO;
 
-  Serial.println("Fase Memory iniciando...");
+  Serial.println(F("Fase Memory iniciando..."));
 }
 
 StatusFase memoryFase(void) {
@@ -102,7 +103,7 @@ StatusFase memoryFase(void) {
         estado = MEMORY_SEGURANDO;
       } else if (agora - referenciaTempo >= TEMPO_RESPOSTA) {
         apagarTodosLeds();
-        Serial.println("Demorou demais!");
+        Serial.println(F("Demorou demais!"));
         return FASE_ERROU;
       }
       break;
@@ -112,7 +113,7 @@ StatusFase memoryFase(void) {
         apagarLed(apertado);
 
         if (apertado != sequencia[posicao]) {
-          Serial.println("Botao errado!");
+          Serial.println(F("Botao errado!"));
           return FASE_ERROU;
         }
 
@@ -122,7 +123,7 @@ StatusFase memoryFase(void) {
           estado = MEMORY_ESPERA_BOTAO;
         } else if (rodada == TAMANHO_SEQUENCIA) {
           apagarTodosLeds();
-          Serial.println("Fase Memory concluida!");
+          Serial.println(F("Fase Memory concluida!"));
           return FASE_VENCEU;
         } else {
           rodada++;

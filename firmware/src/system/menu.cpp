@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "menu.h"
 #include "../hardware/lerTeclado.h"
 
@@ -6,11 +7,11 @@ char menu(void) {
 
   if (!telaExibida) {
     Serial.println();
-    Serial.println("=== SUPER BOMBA 3000 ===");
-    Serial.println("1 - Facil (3 fases)");
-    Serial.println("2 - Normal (4 fases)");
-    Serial.println("3 - Dificil (5 fases)");
-    Serial.println("Escolha a dificuldade:");
+    Serial.println(F("=== SUPER BOMBA 3000 ==="));
+    Serial.println(F("1 - Facil (3 fases)"));
+    Serial.println(F("2 - Normal (4 fases)"));
+    Serial.println(F("3 - Dificil (5 fases)"));
+    Serial.println(F("Escolha a dificuldade:"));
     telaExibida = true;
   }
 
