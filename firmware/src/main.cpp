@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <avr/io.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 
 #include "hardware/lerTeclado.h"
@@ -51,6 +52,31 @@ static const uint8_t SEGUNDOS_CONTAGEM = 5;
 static bool contagemAtiva = false;
 static uint8_t contagemRestante = 0;
 static uint32_t contagemReferencia = 0;
+
+static void reiniciarPartida(void) {
+  jogoIniciado = false;
+  faseInicializada = false;
+  aguardandoReinicio = false;
+  contagemAtiva = false;
+
+  vidas = 3;
+  tempo_jogo = 0;
+  indiceFaseAtual = 0;
+  apagarTodosLeds();
+  desligarDisplay();
+}
+
+static void verificarSerial(void) {
+  if (Serial.available() > 0) {
+    char ultimoCaractere = Serial.read();
+
+    if (ultimoCaractere == '\r' || ultimoCaractere == '\n') return;
+
+    if (ultimoCaractere == 'R' || ultimoCaractere == 'r') {reiniciarPartida(); return;}
+
+    else {Serial.println("Comando invalido");}
+  }
+}
 
 static void finalizarJogo(const char *mensagem) {
   jogoIniciado = false;
@@ -110,6 +136,7 @@ void setup() {
 }
 
 void loop() {
+  verificarSerial();
   if (aguardandoReinicio) {
     if (lerTeclado() != '\0') {
       aguardandoReinicio = false;
