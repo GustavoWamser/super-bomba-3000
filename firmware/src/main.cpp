@@ -6,6 +6,7 @@
 
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
+#include "hardware/bomba.h"
 #include "hardware/botoes.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
@@ -32,6 +33,8 @@ static uint8_t quantidadeFases = 0;
 static uint8_t indiceFaseAtual = 0;
 static bool jogoIniciado = false;
 static bool faseInicializada = false;
+static bool aguardandoInicioFase = false;
+static bool mensagemInicioFaseExibida = false;
 static bool aguardandoReinicio = false;
 static uint8_t vidas = 3;
 static uint16_t tempo_jogo = 0;
@@ -100,6 +103,8 @@ static void verificarSerial(void) {
 static void finalizarJogo(const char *mensagem) {
   jogoIniciado = false;
   faseInicializada = false;
+  aguardandoInicioFase = false;
+  mensagemInicioFaseExibida = false;
   aguardandoReinicio = true;
   Serial.println(mensagem);
   Serial.println(F("Pressione uma tecla para voltar ao menu."));
@@ -135,10 +140,15 @@ static void iniciarJogo(char dificuldade) {
   contagemAtiva = false;
   jogoIniciado = true;
   faseInicializada = false;
+  aguardandoInicioFase = true;
+  mensagemInicioFaseExibida = false;
   aguardandoReinicio = false;
   ligarDisplayJogo();
   atualizarVidasDisplay(vidas);
   atualizarTempoDisplay(tempo_jogo);
+
+  reiniciarMath();
+  reiniciarQuiz();
   Serial.println(F("Jogo iniciado!"));
   
 }
@@ -147,6 +157,7 @@ void setup() {
   Serial.begin(9600);
   configurarTeclado();
   configurarADC();
+  configurarBomba();
   configurarBotoes();
   configurarLeds();
   configurarDisplay();
@@ -167,8 +178,19 @@ void loop() {
   if (!jogoIniciado) {
     char dificuldade = menu();
     if (dificuldade != '\0') {
+      if (fioDesconectado()) {
+        Serial.println(F("Conecte o fio da bomba entre D2 e GND antes de iniciar."));
+        return;
+      }
+
+      bombaReset();
       iniciarJogo(dificuldade);
     }
+    return;
+  }
+
+  if (bombaAcionada()) {
+    finalizarJogo("A bomba explodiu! O fio foi desconectado.");
     return;
   }
 
@@ -187,6 +209,21 @@ void loop() {
 
   if (indiceFaseAtual >= quantidadeFases) {
     finalizarJogo("Parabens! Voce concluiu o jogo.");
+    return;
+  }
+
+  if (aguardandoInicioFase) {
+    if (!mensagemInicioFaseExibida) {
+      Serial.println(F("Pressione um botao para iniciar a proxima fase."));
+      mensagemInicioFaseExibida = true;
+    }
+
+    if (lerTeclado() == '\0' && lerAperto() < 0) {
+      return;
+    }
+
+    aguardandoInicioFase = false;
+    mensagemInicioFaseExibida = false;
     return;
   }
 
@@ -247,7 +284,12 @@ void loop() {
     atualizarVidasDisplay(vidas);
     tempo_jogo = tempo_jogo > 10 ? tempo_jogo - 10 : 0;
     atualizarTempoDisplay(tempo_jogo);
-    faseInicializada = false;
+
+    // O labirinto deve continuar no mesmo mapa e na mesma posicao.
+    // Memoria e Reflex reiniciam seus desafios quando a vida e perdida.
+    if (faseAtual == MEMORY || faseAtual == REFLEX) {
+      faseInicializada = false;
+    }
 
     Serial.print(F("Erro! Vidas restantes: "));
     Serial.println(vidas);
@@ -263,5 +305,7 @@ void loop() {
   if (statusFase == FASE_VENCEU) {
     indiceFaseAtual++;
     faseInicializada = false;
+    aguardandoInicioFase = true;
+    mensagemInicioFaseExibida = false;
   }
 }
