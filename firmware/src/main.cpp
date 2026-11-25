@@ -7,6 +7,7 @@
 #include "hardware/lerTeclado.h"
 #include "hardware/adc.h"
 #include "hardware/botoes.h"
+#include "hardware/buzzer.h"
 #include "hardware/leds.h"
 #include "hardware/timer.h"
 #include "hardware/display.h"
@@ -54,6 +55,7 @@ static uint8_t contagemRestante = 0;
 static uint32_t contagemReferencia = 0;
 
 static void reiniciarPartida(void) {
+  desligarBuzzer();
   jogoIniciado = false;
   faseInicializada = false;
   aguardandoReinicio = false;
@@ -118,6 +120,7 @@ static void sortearOrdemFases(void) {
 }
 
 static void iniciarJogo(char dificuldade) {
+  desligarBuzzer();
   if (dificuldade == '1') {
     quantidadeFases = 3;
     tempo_jogo = 180;
@@ -148,6 +151,7 @@ void setup() {
   configurarTeclado();
   configurarADC();
   configurarBotoes();
+  configurarBuzzer();
   configurarLeds();
   configurarDisplay();
   configurarTimer();
@@ -159,6 +163,7 @@ void loop() {
   if (aguardandoReinicio) {
     if (lerTeclado() != '\0') {
       aguardandoReinicio = false;
+      desligarBuzzer();
       desligarDisplay();
     }
     return;
@@ -181,14 +186,18 @@ void loop() {
     vidas = 0;
     atualizarVidasDisplay(vidas);
     atualizarTempoDisplay(tempo_jogo);
+    tocarAlarmeBuzzer();
     finalizarJogo("A bomba explodiu! Voce foi derrotado.");
     return;
   }
 
   if (indiceFaseAtual >= quantidadeFases) {
+    desligarBuzzer();
     finalizarJogo("Parabens! Voce concluiu o jogo.");
     return;
   }
+
+  avisarTempoBuzzer(tempo_jogo);
 
   Fase faseAtual = ordemFases[indiceFaseAtual];
   if (!faseInicializada && (faseAtual == MEMORY || faseAtual == REFLEX)) {
@@ -255,9 +264,11 @@ void loop() {
 
     if (vidas == 0 || tempo_jogo == 0) {
       atualizarTempoDisplay(0);
+      tocarAlarmeBuzzer();
       finalizarJogo("A bomba explodiu! Voce perdeu o jogo.");
       return;
     }
+    avisarTempoBuzzer(tempo_jogo);
   }
 
   if (statusFase == FASE_VENCEU) {
