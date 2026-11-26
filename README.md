@@ -103,7 +103,11 @@ O buzzer, conectado ao pino digital **D11**, emite avisos sonoros nos últimos 1
 
 Ao concluir todas as fases da dificuldade escolhida, o jogador vence. Depois do fim da partida, pressione uma tecla para voltar ao menu.
 
-Para encerrar a partida e voltar ao menu a qualquer momento, envie `r` (ou `R`) pelo Monitor Serial.
+### Reset e interrupções
+
+Para encerrar a partida e voltar ao menu, envie `r` (ou `R`) pelo Monitor Serial. O comando desliga o buzzer e o display e reinicia o estado principal da partida.
+
+O fio de segurança usa a interrupção externa **INT0**, no pino D2. Quando o fio é desconectado durante a partida, a interrupção registra o evento e o jogo termina com a explosão da bomba. O **Timer1** também usa uma interrupção periódica para acompanhar o tempo do jogo.
 
 ## 4. Como compilar e executar
 
